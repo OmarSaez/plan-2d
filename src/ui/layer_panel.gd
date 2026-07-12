@@ -85,10 +85,14 @@ func _ready() -> void:
 	)
 	add_btn_wrapper.add_child(add_btn)
 	
+	var collapse_wrapper = Control.new()
+	collapse_wrapper.custom_minimum_size = Vector2(30, 30)
+	header.add_child(collapse_wrapper)
+	
 	collapse_btn = _create_icon_btn(chevron_down, 30)
 	collapse_btn.pivot_offset = Vector2(15, 15)
 	collapse_btn.pressed.connect(_on_collapse_pressed)
-	header.add_child(collapse_btn)
+	collapse_wrapper.add_child(collapse_btn)
 	
 	content_vbox = VBoxContainer.new()
 	content_vbox.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)

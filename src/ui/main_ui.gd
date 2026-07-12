@@ -53,6 +53,9 @@ func _ready() -> void:
 	collapse_btn.pivot_offset = Vector2(16, 16)
 	settings_btn.tapped.connect(_on_settings_pressed)
 	
+	_wrap_button_for_rotation(collapse_btn)
+	_wrap_button_for_rotation(settings_btn)
+	
 	eye_btn.tapped.connect(_on_eye_pressed)
 	eye_btn.set_active(true)
 	
@@ -111,6 +114,17 @@ func _initialize_heights() -> void:
 	collapsed_content_h = label_dibujo.size.y + 24 + 92
 	
 	_on_global_tool_selected("pen") # Activar visualmente lápiz
+
+func _wrap_button_for_rotation(btn: Button) -> void:
+	var parent = btn.get_parent()
+	var wrapper = Control.new()
+	wrapper.custom_minimum_size = btn.custom_minimum_size
+	var idx = btn.get_index()
+	parent.remove_child(btn)
+	parent.add_child(wrapper)
+	parent.move_child(wrapper, idx)
+	wrapper.add_child(btn)
+	btn.position = Vector2.ZERO
 
 func _on_global_tool_selected(tool_id: String) -> void:
 	pen_btn.set_active(tool_id == "pen")
