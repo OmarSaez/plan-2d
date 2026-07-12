@@ -9,6 +9,11 @@ func setup(_canvas_manager: CanvasManager) -> void:
 	# Iniciar con Lápiz por defecto
 	current_tool = PenTool.new(canvas_manager)
 	EventBus.tool_selected.connect(_on_tool_selected)
+	EventBus.tool_action_cancelled.connect(_on_tool_action_cancelled)
+
+func _on_tool_action_cancelled() -> void:
+	if current_tool:
+		current_tool.cancel_action()
 
 func _on_tool_selected(tool_id: String) -> void:
 	if tool_id == "pen":

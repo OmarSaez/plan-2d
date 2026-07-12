@@ -1,4 +1,4 @@
-extends Control
+extends Node2D
 class_name CanvasManager
 
 var layers: Array[DrawingLayer] = []
@@ -7,19 +7,15 @@ var paper_rect: ColorRect
 var bubbles: Array[Label] = []
 
 func _ready() -> void:
-	# Crear fondo gris oscuro para el espacio de trabajo
-	var bg = ColorRect.new()
-	bg.color = Color(0.12, 0.12, 0.14)
-	bg.set_anchors_preset(PRESET_FULL_RECT)
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(bg)
-
 	# Crear la hoja de papel (Tamaño carta 816x1056)
 	paper_rect = ColorRect.new()
 	paper_rect.color = Color.WHITE
 	paper_rect.custom_minimum_size = Vector2(816, 1056)
 	paper_rect.size = Vector2(816, 1056)
-	paper_rect.set_anchors_preset(PRESET_CENTER)
+	
+	# Centrar el papel en el mundo (0, 0)
+	paper_rect.position = -paper_rect.size / 2.0
+	
 	paper_rect.clip_contents = true # Evita que los trazos salgan de la hoja
 	paper_rect.mouse_filter = Control.MOUSE_FILTER_PASS
 	paper_rect.gui_input.connect(_on_paper_gui_input)

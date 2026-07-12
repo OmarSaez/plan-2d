@@ -19,3 +19,10 @@ func process_input(event: InputEvent) -> void:
 	elif event is InputEventMouseMotion or event is InputEventScreenDrag:
 		if is_drawing:
 			layer.add_point(event.position)
+
+func cancel_action() -> void:
+	if is_drawing:
+		is_drawing = false
+		var layer = canvas.get_active_layer()
+		if layer:
+			layer.cancel_line()

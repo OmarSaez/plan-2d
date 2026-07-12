@@ -21,5 +21,11 @@ func process_input(event: InputEvent) -> void:
 			
 	elif event is InputEventMouseMotion or event is InputEventScreenDrag:
 		if is_drawing:
-			# Actualiza el final de la línea recta
 			layer.set_current_line(PackedVector2Array([start_point, event.position]))
+
+func cancel_action() -> void:
+	if is_drawing:
+		is_drawing = false
+		var layer = canvas.get_active_layer()
+		if layer:
+			layer.cancel_line()

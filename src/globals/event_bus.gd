@@ -4,6 +4,7 @@ extends Node
 
 # --- UI Signals ---
 signal tool_selected(tool_id: String)
+signal tool_action_cancelled()
 signal perfect_dimensions_confirmed(width: float, height: float)
 signal perfect_dimensions_cancelled()
 signal color_changed(new_color: Color)
@@ -16,6 +17,12 @@ func emit_layers_changed(info: Array) -> void:
 
 func emit_active_layer_changed(index: int) -> void:
 	active_layer_changed.emit(index)
+
+func emit_tool_selected(tool_id: String) -> void:
+	tool_selected.emit(tool_id)
+
+func emit_tool_action_cancelled() -> void:
+	tool_action_cancelled.emit()
 
 var current_eraser_mode: String = "stroke"
 var current_language: String = "en"

@@ -1,6 +1,6 @@
 extends Node
 
-@onready var canvas_manager: CanvasManager = $CanvasManager
+@onready var canvas_manager: CanvasManager = $Workspace/CanvasManager
 @onready var tool_manager: ToolManager = $ToolManager
 
 func _ready() -> void:

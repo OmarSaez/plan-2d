@@ -29,3 +29,10 @@ func _update_rect(layer: DrawingLayer, current_pos: Vector2) -> void:
 	var p4 = Vector2(start_point.x, current_pos.y)
 	var p5 = start_point
 	layer.set_current_line(PackedVector2Array([p1, p2, p3, p4, p5]))
+
+func cancel_action() -> void:
+	if is_drawing:
+		is_drawing = false
+		var layer = canvas.get_active_layer()
+		if layer:
+			layer.cancel_line()

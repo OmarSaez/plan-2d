@@ -8,3 +8,6 @@ func _init(_canvas: CanvasManager) -> void:
 
 func process_input(event: InputEvent) -> void:
 	pass
+
+func cancel_action() -> void:
+	pass

@@ -25,6 +25,13 @@ func _on_dimensions_cancelled() -> void:
 	if layer:
 		layer.set_current_line(PackedVector2Array())
 
+func cancel_action() -> void:
+	if current_state == State.PLACING:
+		current_state = State.IDLE
+		var layer = canvas.get_active_layer()
+		if layer:
+			layer.set_current_line(PackedVector2Array())
+
 func process_input(event: InputEvent) -> void:
 	if current_state == State.IDLE:
 		if event is InputEventMouseMotion or event is InputEventScreenDrag:

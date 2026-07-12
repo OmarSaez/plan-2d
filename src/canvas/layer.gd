@@ -107,6 +107,13 @@ func finish_line() -> void:
 	stroke_finished.emit()
 	queue_redraw()
 
+func cancel_line() -> void:
+	current_line = PackedVector2Array()
+	current_length_mm = 0.0
+	current_shape_type = "freehand"
+	stroke_finished.emit()
+	queue_redraw()
+
 func erase_stroke(point: Vector2) -> bool:
 	var erased_something = false
 	var threshold = 10.0
