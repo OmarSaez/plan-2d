@@ -5,6 +5,7 @@ var dragging_index: int = -1
 var double_click_timer: float = 0.0
 var double_click_threshold: float = 0.3
 var last_clicked_index: int = -1
+var has_dragged: bool = false
 
 func _init(c: CanvasManager) -> void:
 	super._init(c)
@@ -23,17 +24,22 @@ func process_input(event: InputEvent) -> void:
 						var line = layer.lines[idx]
 						var current_angle = line.get("label_angle", 0.0)
 						layer.update_line_label_angle(idx, current_angle + 90.0)
+						canvas.save_state()
 						dragging_index = -1
 						last_clicked_index = -1 # Reset for next click
 					else:
 						dragging_index = idx
 						last_clicked_index = idx
 						double_click_timer = current_time
+						has_dragged = false
 			else:
+				if dragging_index != -1 and has_dragged:
+					canvas.save_state()
 				dragging_index = -1
 				
 	elif event is InputEventMouseMotion:
 		if dragging_index != -1:
+			has_dragged = true
 			var line = layer.lines[dragging_index]
 			var pts: PackedVector2Array = line["points"]
 			var type = line.get("type", "freehand")

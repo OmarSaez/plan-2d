@@ -12,7 +12,7 @@
 [ext_resource type="Texture2D" path="res://assets/icons/chevron-up.svg" id="10_up"]
 [ext_resource type="Texture2D" path="res://assets/icons/undo-2.svg" id="11_undo"]
 [ext_resource type="Texture2D" path="res://assets/icons/grid-3x3.svg" id="12_grid3"]
-[ext_resource type="Texture2D" path="res://assets/icons/sun.svg" id="13_sun"]
+[ext_resource type="Texture2D" path="res://assets/icons/redo-2.svg" id="13_redo"]
 [ext_resource type="Texture2D" path="res://assets/icons/eye.svg" id="14_eye"]
 [ext_resource type="Texture2D" path="res://assets/icons/file-plus.svg" id="15_new"]
 [ext_resource type="Texture2D" path="res://assets/icons/image.svg" id="16_img"]
@@ -343,17 +343,17 @@ icon = ExtResource("11_undo")
 icon_alignment = 1
 script = ExtResource("2_xxx")
 
+[node name="RedoButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ProyGrid"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+icon = ExtResource("13_redo")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
 [node name="GridButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ProyGrid"]
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 icon = ExtResource("12_grid3")
-icon_alignment = 1
-script = ExtResource("2_xxx")
-
-[node name="SunButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ProyGrid"]
-custom_minimum_size = Vector2(40, 40)
-layout_mode = 2
-icon = ExtResource("13_sun")
 icon_alignment = 1
 script = ExtResource("2_xxx")
 

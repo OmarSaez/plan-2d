@@ -6,6 +6,10 @@ var active_layer_index: int = -1
 var paper_rect: ColorRect
 var bubbles: Array[Label] = []
 
+var history_stack: Array[Dictionary] = []
+var history_index: int = -1
+var is_restoring: bool = false
+
 func _ready() -> void:
 	# Crear la hoja de papel (Tamaño carta 816x1056)
 	paper_rect = ColorRect.new()
@@ -23,9 +27,14 @@ func _ready() -> void:
 
 	EventBus.clear_canvas_requested.connect(_on_clear_requested)
 	EventBus.camera_view_changed.connect(_on_camera_view_changed)
+	EventBus.undo_requested.connect(_on_undo_requested)
+	EventBus.redo_requested.connect(_on_redo_requested)
 
+	is_restoring = true
 	add_layer(tr("UI_NEW_LAYER"))
 	set_active_layer(0)
+	is_restoring = false
+	save_state()
 
 func get_unique_layer_name(base_name: String) -> String:
 	var new_name = base_name
@@ -53,6 +62,7 @@ func add_layer(layer_name: String) -> void:
 	layer.stroke_finished.connect(_on_stroke_finished)
 	
 	EventBus.emit_layers_changed(_get_layers_info())
+	save_state()
 
 func remove_layer(index: int) -> void:
 	if index >= 0 and index < layers.size():
@@ -75,6 +85,7 @@ func remove_layer(index: int) -> void:
 				EventBus.emit_active_layer_changed(active_layer_index)
 				
 		EventBus.emit_layers_changed(_get_layers_info())
+		save_state()
 
 func set_active_layer(index: int) -> void:
 	if index >= 0 and index < layers.size():
@@ -90,11 +101,13 @@ func rename_layer(index: int, new_name: String) -> void:
 	if index >= 0 and index < layers.size():
 		layers[index].name = new_name
 		EventBus.emit_layers_changed(_get_layers_info())
+		save_state()
 
 func toggle_layer_visibility(index: int) -> void:
 	if index >= 0 and index < layers.size():
 		layers[index].visible = !layers[index].visible
 		EventBus.emit_layers_changed(_get_layers_info())
+		save_state()
 
 func _get_layers_info() -> Array:
 	var info = []
@@ -109,6 +122,7 @@ func _on_clear_requested() -> void:
 	for layer in layers:
 		layer.clear()
 	update_bubbles([])
+	save_state()
 
 func _on_camera_view_changed() -> void:
 	var cam_rot = 0.0
@@ -169,8 +183,92 @@ func _on_stroke_updated(bubbles_data: Array) -> void:
 
 func _on_stroke_finished() -> void:
 	update_bubbles([])
+	save_state()
 
 # El input es ahora relativo a la hoja de papel
 func _on_paper_gui_input(event: InputEvent) -> void:
 	if get_node_or_null("../../ToolManager"):
 		$"../../ToolManager".process_canvas_input(event)
+
+func get_current_state() -> Dictionary:
+	var state_layers = []
+	for layer in layers:
+		var cloned_lines = []
+		for line_data in layer.lines:
+			cloned_lines.append(line_data.duplicate(true))
+			
+		state_layers.append({
+			"name": layer.name,
+			"visible": layer.visible,
+			"lines": cloned_lines
+		})
+		
+	return {
+		"active_layer_index": active_layer_index,
+		"layers": state_layers
+	}
+
+func restore_state(state: Dictionary) -> void:
+	is_restoring = true
+	
+	for layer in layers:
+		paper_rect.remove_child(layer)
+		layer.queue_free()
+	layers.clear()
+	
+	for layer_state in state["layers"]:
+		var layer = DrawingLayer.new()
+		layer.name = layer_state["name"]
+		layer.visible = layer_state["visible"]
+		
+		# Enforce typed array assignment safely
+		for ld in layer_state["lines"]:
+			layer.lines.append(ld)
+		paper_rect.add_child(layer)
+		layers.append(layer)
+		
+		layer.stroke_updated.connect(_on_stroke_updated)
+		layer.stroke_finished.connect(_on_stroke_finished)
+		
+	active_layer_index = state["active_layer_index"]
+	
+	EventBus.emit_layers_changed(_get_layers_info())
+	EventBus.emit_active_layer_changed(active_layer_index)
+	
+	for layer in layers:
+		layer.queue_redraw()
+		
+	is_restoring = false
+
+func save_state() -> void:
+	if is_restoring: return
+	
+	var state = get_current_state()
+	
+	if history_index < history_stack.size() - 1:
+		history_stack = history_stack.slice(0, history_index + 1)
+		
+	history_stack.append(state)
+	
+	if history_stack.size() > 15:
+		history_stack.pop_front()
+		
+	history_index = history_stack.size() - 1
+	_emit_history_changed()
+
+func _emit_history_changed() -> void:
+	var can_undo = history_index > 0
+	var can_redo = history_index < history_stack.size() - 1
+	EventBus.history_changed.emit(can_undo, can_redo)
+
+func _on_undo_requested() -> void:
+	if history_index > 0:
+		history_index -= 1
+		restore_state(history_stack[history_index])
+		_emit_history_changed()
+
+func _on_redo_requested() -> void:
+	if history_index < history_stack.size() - 1:
+		history_index += 1
+		restore_state(history_stack[history_index])
+		_emit_history_changed()

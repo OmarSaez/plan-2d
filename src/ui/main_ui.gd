@@ -25,6 +25,8 @@ extends Control
 @onready var tools_grid: HFlowContainer = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ToolsGrid
 @onready var color_grid: HBoxContainer = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ColorGrid
 @onready var label_dibujo: Label = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/LabelDibujo
+@onready var undo_btn: SquishyButton = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ProyGrid/UndoButton
+@onready var redo_btn: SquishyButton = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ProyGrid/RedoButton
 @onready var eye_btn: SquishyButton = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ProyGrid/EyeButton
 
 @onready var settings_widget: PanelContainer = $SettingsWidget
@@ -58,6 +60,11 @@ func _ready() -> void:
 	
 	eye_btn.tapped.connect(_on_eye_pressed)
 	eye_btn.set_active(true)
+	
+	undo_btn.tapped.connect(func(): EventBus.undo_requested.emit())
+	redo_btn.tapped.connect(func(): EventBus.redo_requested.emit())
+	EventBus.history_changed.connect(_on_history_changed)
+	_on_history_changed(false, false)
 	
 	sidebar.custom_minimum_size.x = 248
 	sidebar.size.x = 248
@@ -198,6 +205,23 @@ func _on_dim_cancel() -> void:
 func _on_eye_pressed() -> void:
 	EventBus.toggle_measures_visibility()
 	eye_btn.set_active(EventBus.show_measures)
+
+func _on_history_changed(can_undo: bool, can_redo: bool) -> void:
+	undo_btn.disabled = !can_undo
+	if can_undo:
+		undo_btn.modulate = Color.WHITE
+		undo_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	else:
+		undo_btn.modulate = Color(1, 1, 1, 0.25)
+		undo_btn.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		
+	redo_btn.disabled = !can_redo
+	if can_redo:
+		redo_btn.modulate = Color.WHITE
+		redo_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	else:
+		redo_btn.modulate = Color(1, 1, 1, 0.25)
+		redo_btn.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 func _on_collapse_pressed() -> void:
 	is_collapsed = !is_collapsed

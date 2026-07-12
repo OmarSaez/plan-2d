@@ -114,6 +114,7 @@ func _squish(target: Vector2) -> void:
 	tw.tween_property(self, "scale", target, 0.15).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 func _on_mouse_entered() -> void:
+	if disabled: return
 	if not is_active_tool:
 		var tw = create_tween()
 		tw.tween_property(self, "modulate", Color(1.3, 1.3, 1.3), 0.15)
@@ -121,6 +122,7 @@ func _on_mouse_entered() -> void:
 func _on_mouse_exited() -> void:
 	is_pressing = false
 	_hide_tooltip()
+	if disabled: return
 	if not is_active_tool:
 		var tw = create_tween()
 		tw.tween_property(self, "modulate", Color.WHITE, 0.15)
@@ -139,3 +141,4 @@ func _apply_styles() -> void:
 		add_theme_stylebox_override("normal", normal_style)
 		add_theme_stylebox_override("hover", normal_style)
 		add_theme_stylebox_override("pressed", normal_style)
+		add_theme_stylebox_override("disabled", normal_style)

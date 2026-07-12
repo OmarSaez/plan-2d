@@ -13,6 +13,9 @@ signal layers_changed(layers_info: Array)
 signal active_layer_changed(index: int)
 signal camera_view_changed()
 signal measures_visibility_changed(visible: bool)
+signal undo_requested()
+signal redo_requested()
+signal history_changed(can_undo: bool, can_redo: bool)
 
 var show_measures: bool = true
 var auto_measure: bool = true

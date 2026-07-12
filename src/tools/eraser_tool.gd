@@ -3,6 +3,7 @@ class_name EraserTool
 
 var is_dragging: bool = false
 var mode: String = "stroke" # area | stroke
+var has_erased_in_current_stroke: bool = false
 
 func _init(c: CanvasManager) -> void:
 	super._init(c)
@@ -44,17 +45,24 @@ func process_input(event: InputEvent) -> void:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				is_dragging = true
+				has_erased_in_current_stroke = false
 				_perform_erase(event.position)
 			else:
 				is_dragging = false
+				if has_erased_in_current_stroke:
+					canvas.save_state()
 
 func _perform_erase(pos: Vector2) -> void:
 	var l = canvas.get_active_layer()
+	var erased = false
 	if mode == "stroke":
-		l.erase_stroke(pos)
+		erased = l.erase_stroke(pos)
 	elif mode == "area":
 		var poly = _create_circle_polygon(pos, l.eraser_radius)
-		l.erase_area(poly)
+		erased = l.erase_area(poly)
+		
+	if erased:
+		has_erased_in_current_stroke = true
 
 func _create_circle_polygon(center: Vector2, radius: float, segments: int = 16) -> PackedVector2Array:
 	var poly = PackedVector2Array()
