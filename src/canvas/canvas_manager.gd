@@ -11,19 +11,34 @@ var history_index: int = -1
 var is_restoring: bool = false
 
 func _ready() -> void:
-	# Crear la hoja de papel (Tamaño carta 816x1056)
+	var p_size: Vector2 = EventBus.current_project_config["paper_size"]
+	var c_scale: float = EventBus.current_project_config.get("canvas_scale", 1.0)
+	var final_size = p_size * c_scale
+	
 	paper_rect = ColorRect.new()
 	paper_rect.color = Color.WHITE
-	paper_rect.custom_minimum_size = Vector2(816, 1056)
-	paper_rect.size = Vector2(816, 1056)
+	paper_rect.custom_minimum_size = final_size
+	paper_rect.size = final_size
 	
 	# Centrar el papel en el mundo (0, 0)
 	paper_rect.position = -paper_rect.size / 2.0
 	
+	add_child(paper_rect)
+	move_child(paper_rect, 0)
+	
+	# Ajustar cámara
+	var cam = get_viewport().get_camera_2d()
+	if cam and cam is CameraController:
+		cam.zoom_min = 0.001
+		cam.zoom_max = 50.0
+		# Zoom para que quepa la hoja (asumiendo pantalla base ~1000px)
+		var fit_zoom = 1000.0 / max(final_size.x, final_size.y)
+		cam.zoom = Vector2(fit_zoom, fit_zoom)
+		cam.update_hud()
+	
 	paper_rect.clip_contents = true # Evita que los trazos salgan de la hoja
 	paper_rect.mouse_filter = Control.MOUSE_FILTER_PASS
 	paper_rect.gui_input.connect(_on_paper_gui_input)
-	add_child(paper_rect)
 
 	EventBus.clear_canvas_requested.connect(_on_clear_requested)
 	EventBus.camera_view_changed.connect(_on_camera_view_changed)
@@ -130,11 +145,13 @@ func _on_camera_view_changed() -> void:
 	if cam:
 		cam_rot = cam.rotation
 	var snapped_cam_rot = snapped(cam_rot, PI/2.0)
+	var c_scale: float = EventBus.current_project_config.get("canvas_scale", 1.0)
 	for b in bubbles:
 		if b.visible:
 			b.reset_size()
 			b.pivot_offset = b.size / 2.0
 			b.rotation = snapped_cam_rot
+			b.scale = Vector2(c_scale, c_scale)
 
 func _create_bubble() -> Label:
 	var b = Label.new()
@@ -150,10 +167,10 @@ func _create_bubble() -> Label:
 	style.content_margin_bottom = 4
 	b.add_theme_stylebox_override("normal", style)
 	b.add_theme_color_override("font_color", Color.WHITE)
-	b.hide()
+	var c_scale: float = EventBus.current_project_config.get("canvas_scale", 1.0)
+	b.scale = Vector2(c_scale, c_scale)
 	add_child(b)
 	return b
-
 
 func update_bubbles(bubbles_data: Array) -> void:
 	var cam_rot = 0.0
@@ -168,11 +185,14 @@ func update_bubbles(bubbles_data: Array) -> void:
 	
 	for i in range(bubbles.size()):
 		if i < bubbles_data.size():
+			var c_scale: float = EventBus.current_project_config.get("canvas_scale", 1.0)
 			bubbles[i].visible = true
 			bubbles[i].text = bubbles_data[i]["text"]
 			bubbles[i].reset_size()
 			bubbles[i].pivot_offset = bubbles[i].size / 2.0
-			# Centrar la burbuja en pos (pos - mitad de la burbuja)
+			bubbles[i].scale = Vector2(c_scale, c_scale)
+			# El pivot está en el centro, así que scale no mueve el centro.
+			# Posicionamos la esquina superior izquierda normal: pos - size/2
 			bubbles[i].position = paper_rect.position + bubbles_data[i]["pos"] - bubbles[i].size / 2.0
 			bubbles[i].rotation = snapped_cam_rot
 		else:

@@ -193,8 +193,8 @@ func _animate_dim_panel(show: bool) -> void:
 		tw.chain().tween_callback(func(): dim_panel.hide())
 
 func _on_dim_confirm() -> void:
-	var w = EventBus.parse_input_to_mm(float(width_input.text))
-	var h = EventBus.parse_input_to_mm(float(height_input.text))
+	var w = EventBus.parse_input_to_px(float(width_input.text))
+	var h = EventBus.parse_input_to_px(float(height_input.text))
 	EventBus.perfect_dimensions_confirmed.emit(w, h)
 
 func _on_dim_cancel() -> void:
@@ -314,6 +314,9 @@ func _setup_unit_options() -> void:
 	unit_option.add_item("UNIT_CM", 1)
 	unit_option.add_item("UNIT_M", 2)
 	unit_option.add_item("UNIT_IN", 3)
+	
+	var conf_unit = EventBus.current_project_config.get("unit", "cm")
+	EventBus.current_unit = conf_unit
 	
 	if EventBus.current_unit == "cm":
 		unit_option.select(1)

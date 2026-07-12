@@ -1,14 +1,14 @@
 extends Node2D
 class_name DrawingLayer
 
-var lines: Array[Dictionary] = [] # Formato: { "points": PackedVector2Array, "length_mm": float, "type": String }
+var lines: Array[Dictionary] = [] # Formato: { "points": PackedVector2Array, "length_px": float, "type": String }
 var current_line: PackedVector2Array = PackedVector2Array()
-var current_length_mm: float = 0.0
+var current_length_px: float = 0.0
 var current_shape_type: String = "freehand"
 
 var line_width: float = 2.0
-var pixels_per_mm: float = 1.0 
 var default_font: Font
+var offset_scale: float = 1.0
 
 # Eraser variables
 var eraser_cursor_pos: Vector2 = Vector2.ZERO
@@ -21,6 +21,10 @@ signal stroke_finished()
 
 func _ready() -> void:
 	default_font = ThemeDB.fallback_font
+	offset_scale = EventBus.current_project_config.get("canvas_scale", 1.0)
+	line_width *= offset_scale
+	eraser_radius *= offset_scale
+	
 	EventBus.unit_changed.connect(func(_u): queue_redraw())
 	EventBus.camera_view_changed.connect(func(): queue_redraw())
 	EventBus.measures_visibility_changed.connect(func(_v): queue_redraw())
@@ -32,16 +36,15 @@ func clear() -> void:
 func start_shape(type: String) -> void:
 	current_shape_type = type
 	current_line = PackedVector2Array()
-	current_length_mm = 0.0
+	current_length_px = 0.0
 
 func add_point(point: Vector2) -> void:
 	if current_line.size() > 0:
-		var distance_px = current_line[-1].distance_to(point)
-		current_length_mm += distance_px / pixels_per_mm
+		current_length_px += current_line[-1].distance_to(point)
 	
 	current_line.append(point)
-	var text = EventBus.format_length(current_length_mm)
-	var offset = Vector2(0, -45).rotated(deg_to_rad(get_snapped_camera_angle()))
+	var text = EventBus.format_length(current_length_px)
+	var offset = Vector2(0, -45 * offset_scale).rotated(deg_to_rad(get_snapped_camera_angle()))
 	
 	if EventBus.auto_measure and EventBus.show_measures:
 		stroke_updated.emit([{"text": text, "pos": point + offset}])
@@ -52,24 +55,24 @@ func add_point(point: Vector2) -> void:
 
 func set_current_line(points: PackedVector2Array) -> void:
 	current_line = points
-	current_length_mm = 0.0
+	current_length_px = 0.0
 	for i in range(1, points.size()):
-		current_length_mm += points[i-1].distance_to(points[i]) / pixels_per_mm
+		current_length_px += points[i-1].distance_to(points[i])
 		
 	if points.size() > 0:
 		var bubbles_data = []
 		if (current_shape_type == "rectangle" or current_shape_type == "perfect") and points.size() == 5:
-			var w = points[0].distance_to(points[1]) / pixels_per_mm
-			var h = points[1].distance_to(points[2]) / pixels_per_mm
+			var w = points[0].distance_to(points[1])
+			var h = points[1].distance_to(points[2])
 			
 			var top_center = (points[0] + points[1]) / 2.0
 			var right_center = (points[1] + points[2]) / 2.0
 			var bottom_center = (points[2] + points[3]) / 2.0
 			
 			# Main bubble (W x H) top
-			var offset_up = Vector2(0, -45).rotated(deg_to_rad(get_snapped_camera_angle()))
-			var offset_down = Vector2(0, 25).rotated(deg_to_rad(get_snapped_camera_angle()))
-			var offset_right = Vector2(35, 0).rotated(deg_to_rad(get_snapped_camera_angle()))
+			var offset_up = Vector2(0, -45 * offset_scale).rotated(deg_to_rad(get_snapped_camera_angle()))
+			var offset_down = Vector2(0, 25 * offset_scale).rotated(deg_to_rad(get_snapped_camera_angle()))
+			var offset_right = Vector2(35 * offset_scale, 0).rotated(deg_to_rad(get_snapped_camera_angle()))
 			
 			bubbles_data.append({"text": "%s x %s" % [EventBus.format_length(w), EventBus.format_length(h)], "pos": top_center + offset_up})
 			
@@ -80,9 +83,9 @@ func set_current_line(points: PackedVector2Array) -> void:
 			# Height bubble right
 			if h >= 0.1:
 				bubbles_data.append({"text": EventBus.format_length(h), "pos": right_center + offset_right})
-		elif current_length_mm > 0.1:
-			var offset = Vector2(0, -45).rotated(deg_to_rad(get_snapped_camera_angle()))
-			var text = EventBus.format_length(current_length_mm)
+		elif current_length_px > 0.1:
+			var offset = Vector2(0, -45 * offset_scale).rotated(deg_to_rad(get_snapped_camera_angle()))
+			var text = EventBus.format_length(current_length_px)
 			bubbles_data.append({"text": text, "pos": current_line[-1] + offset})
 			
 		if EventBus.auto_measure and EventBus.show_measures:
@@ -99,11 +102,11 @@ func finish_line() -> void:
 			for i in range(4):
 				var p1 = current_line[i]
 				var p2 = current_line[i+1]
-				var dist = p1.distance_to(p2) / pixels_per_mm
+				var dist = p1.distance_to(p2)
 				if dist >= 0.1:
 					lines.append({
 						"points": PackedVector2Array([p1, p2]),
-						"length_mm": dist,
+						"length_px": dist,
 						"type": "straight",
 						"color": EventBus.current_color,
 						"label_angle": get_snapped_camera_angle(),
@@ -114,7 +117,7 @@ func finish_line() -> void:
 		else:
 			lines.append({
 				"points": current_line,
-				"length_mm": current_length_mm,
+				"length_px": current_length_px,
 				"type": current_shape_type,
 				"color": EventBus.current_color,
 				"label_angle": get_snapped_camera_angle(),
@@ -123,21 +126,21 @@ func finish_line() -> void:
 				"show_measure": EventBus.auto_measure
 			})
 	current_line = PackedVector2Array()
-	current_length_mm = 0.0
+	current_length_px = 0.0
 	current_shape_type = "freehand"
 	stroke_finished.emit()
 	queue_redraw()
 
 func cancel_line() -> void:
 	current_line = PackedVector2Array()
-	current_length_mm = 0.0
+	current_length_px = 0.0
 	current_shape_type = "freehand"
 	stroke_finished.emit()
 	queue_redraw()
 
 func erase_stroke(point: Vector2) -> bool:
 	var erased_something = false
-	var threshold = 10.0
+	var threshold = 10.0 * EventBus.current_project_config.get("canvas_scale", 1.0)
 	
 	for i in range(lines.size() - 1, -1, -1):
 		var pts = lines[i]["points"]
@@ -183,11 +186,11 @@ func erase_area(polygon: PackedVector2Array) -> bool:
 			if part.size() > 1:
 				var new_length = 0.0
 				for j in range(1, part.size()):
-					new_length += part[j-1].distance_to(part[j]) / pixels_per_mm
+					new_length += part[j-1].distance_to(part[j])
 					
 				new_lines.append({
 					"points": part,
-					"length_mm": new_length,
+					"length_px": new_length,
 					"type": line_data.get("type", "freehand"),
 					"color": line_data.get("color", Color.BLACK),
 					"label_angle": line_data.get("label_angle", 0.0),
@@ -214,9 +217,10 @@ func _draw() -> void:
 	if show_eraser_cursor:
 		if eraser_mode == "area":
 			draw_circle(eraser_cursor_pos, eraser_radius, Color(1, 0.2, 0.2, 0.3))
-			draw_arc(eraser_cursor_pos, eraser_radius, 0, TAU, 32, Color(1, 0.2, 0.2, 0.8), 2.0)
+			draw_arc(eraser_cursor_pos, eraser_radius, 0, TAU, 32, Color(1, 0.2, 0.2, 0.8), 2.0 * EventBus.current_project_config.get("canvas_scale", 1.0))
 		elif eraser_mode == "stroke":
-			draw_circle(eraser_cursor_pos, 8.0, Color(1, 0.2, 0.2, 0.8))
+			var r = 8.0 * EventBus.current_project_config.get("canvas_scale", 1.0)
+			draw_circle(eraser_cursor_pos, r, Color(1, 0.2, 0.2, 0.8))
 
 func get_label_position(line_data: Dictionary) -> Vector2:
 	var pts: PackedVector2Array = line_data["points"]
@@ -238,8 +242,9 @@ func get_label_position(line_data: Dictionary) -> Vector2:
 			
 		normal *= side
 		
-		var text = EventBus.format_length(line_data.get("length_mm", 0.0))
+		var text = EventBus.format_length(line_data.get("length_px", 0.0))
 		var text_size = default_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14) if default_font else Vector2(60, 14)
+		text_size *= offset_scale # Escalar para el espacio de mundo
 		var angle_deg = line_data.get("label_angle", 0.0)
 		var is_vertical_text = (int(angle_deg) % 180 != 0)
 		
@@ -249,10 +254,10 @@ func get_label_position(line_data: Dictionary) -> Vector2:
 		var offset = Vector2.ZERO
 		if abs(normal.x) > abs(normal.y):
 			# Línea vertical -> Normal horizontal
-			offset = normal * (effective_width / 2.0 + 8.0)
+			offset = normal * (effective_width / 2.0 + 8.0 * offset_scale)
 		else:
 			# Línea horizontal -> Normal vertical
-			offset = normal * (effective_height / 2.0 + 8.0)
+			offset = normal * (effective_height / 2.0 + 8.0 * offset_scale)
 			
 		return center + offset # Este es el centro geométrico absoluto
 	else:
@@ -264,7 +269,7 @@ func get_label_position(line_data: Dictionary) -> Vector2:
 			var rem = float_idx - idx0
 			pos = pos.lerp(pts[int(idx1)], rem)
 			
-		return pos + Vector2(0, -15 * side) # Desplazamiento simple para a pulso
+		return pos + Vector2(0, -15 * side * offset_scale) # Desplazamiento simple para a pulso
 
 func _draw_length_text(line_data: Dictionary) -> void:
 	if not EventBus.show_measures: return
@@ -276,29 +281,24 @@ func _draw_length_text(line_data: Dictionary) -> void:
 		return # Ya no soportamos renderizar rectángulos consolidados
 		
 	var geometric_center = get_label_position(line_data)
-	var text = EventBus.format_length(line_data["length_mm"])
+	var text = EventBus.format_length(line_data.get("length_px", 0.0))
 	var angle_deg = line_data.get("label_angle", 0.0)
 	
 	var text_size = default_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14) if default_font else Vector2(60, 14)
 	
-	var draw_pos = geometric_center
-	
-	if angle_deg != 0.0:
-		draw_set_transform(geometric_center, deg_to_rad(angle_deg), Vector2.ONE)
-		draw_pos = Vector2.ZERO # El origen ahora es el centro geométrico
+	draw_set_transform(geometric_center, deg_to_rad(angle_deg), Vector2(offset_scale, offset_scale))
 	
 	# Mover desde el centro geométrico hasta el baseline para dibujado left-aligned
-	draw_pos += Vector2(-text_size.x / 2.0, text_size.y * 0.35)
+	var draw_pos = Vector2(-text_size.x / 2.0, text_size.y * 0.35)
 	
 	draw_string_outline(default_font, draw_pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 2, Color.WHITE)
 	draw_string(default_font, draw_pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.BLACK)
 	
-	if angle_deg != 0.0:
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func get_closest_label_index(pos: Vector2, threshold: float = 30.0) -> int:
 	var closest_idx = -1
-	var min_dist = threshold
+	var min_dist = threshold * offset_scale
 	
 	for i in range(lines.size()):
 		var rect_center = get_label_position(lines[i]) # Ahora es el centro geométrico real

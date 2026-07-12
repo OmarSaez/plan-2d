@@ -59,9 +59,9 @@ func _update_preview(center_pos: Vector2) -> void:
 	
 	layer.start_shape("rectangle")
 	
-	# Convertir mm a píxeles
-	var w_px = exact_w * layer.pixels_per_mm
-	var h_px = exact_h * layer.pixels_per_mm
+	# Los valores ya vienen en píxeles desde main_ui.gd
+	var w_px = exact_w
+	var h_px = exact_h
 	
 	var p1 = center_pos + Vector2(-w_px/2, -h_px/2)
 	var p2 = center_pos + Vector2(w_px/2, -h_px/2)

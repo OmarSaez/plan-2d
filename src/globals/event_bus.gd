@@ -17,6 +17,15 @@ signal undo_requested()
 signal redo_requested()
 signal history_changed(can_undo: bool, can_redo: bool)
 
+var current_project_config: Dictionary = {
+	"name": "Nuevo Proyecto",
+	"paper_size": Vector2(816, 1056),
+	"unit": "cm",
+	"canvas_scale": 1.0
+}
+
+const PIXELS_PER_UNIT: float = 100.0
+
 var show_measures: bool = true
 var auto_measure: bool = true
 
@@ -82,19 +91,34 @@ func set_unit(unit: String) -> void:
 	unit_changed.emit(unit)
 	_save_settings()
 
-func format_length(length_mm: float) -> String:
-	match current_unit:
-		"cm": return "%.1f cm" % (length_mm / 10.0)
-		"m": return "%.2f m" % (length_mm / 1000.0)
-		"in": return "%.2f in" % (length_mm / 25.4)
-		_: return "%.1f mm" % length_mm
+func get_unit_factor(u: String) -> float:
+	match u:
+		"m": return 1.0
+		"cm": return 0.01
+		"mm": return 0.001
+		"in": return 0.0254
+		_: return 1.0
 
-func parse_input_to_mm(val: float) -> float:
+func format_length(length_px: float) -> String:
+	var base_val = length_px / PIXELS_PER_UNIT
+	var base_u = current_project_config.get("unit", "cm")
+	
+	var val_in_meters = base_val * get_unit_factor(base_u)
+	var final_val = val_in_meters / get_unit_factor(current_unit)
+	
 	match current_unit:
-		"cm": return val * 10.0
-		"m": return val * 1000.0
-		"in": return val * 25.4
-		_: return val
+		"mm": return "%.1f mm" % final_val
+		"cm": return "%.1f cm" % final_val
+		"m": return "%.2f m" % final_val
+		"in": return "%.2f in" % final_val
+		_: return "%.2f" % final_val
+
+func parse_input_to_px(val: float) -> float:
+	var val_in_meters = val * get_unit_factor(current_unit)
+	var base_u = current_project_config.get("unit", "cm")
+	var val_in_base = val_in_meters / get_unit_factor(base_u)
+	
+	return val_in_base * PIXELS_PER_UNIT
 
 func _save_settings() -> void:
 	var config = ConfigFile.new()
