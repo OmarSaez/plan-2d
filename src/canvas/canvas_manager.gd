@@ -9,6 +9,7 @@ var bubbles: Array[Label] = []
 var history_stack: Array[Dictionary] = []
 var history_index: int = -1
 var is_restoring: bool = false
+var auto_save_timer: Timer
 
 func _ready() -> void:
 	var p_size: Vector2 = EventBus.current_project_config["paper_size"]
@@ -44,12 +45,38 @@ func _ready() -> void:
 	EventBus.camera_view_changed.connect(_on_camera_view_changed)
 	EventBus.undo_requested.connect(_on_undo_requested)
 	EventBus.redo_requested.connect(_on_redo_requested)
+	EventBus.manual_save_requested.connect(_on_manual_save_requested)
 
-	is_restoring = true
-	add_layer(tr("UI_NEW_LAYER"))
-	set_active_layer(0)
-	is_restoring = false
+	var loaded = EventBus.get_meta("loaded_state", {})
+	if loaded and loaded.has("layers"):
+		restore_state(loaded)
+		EventBus.set_meta("loaded_state", {})
+	else:
+		is_restoring = true
+		add_layer(tr("UI_NEW_LAYER"))
+		set_active_layer(0)
+		is_restoring = false
 	save_state()
+	
+	auto_save_timer = Timer.new()
+	auto_save_timer.timeout.connect(_on_auto_save_timeout)
+	add_child(auto_save_timer)
+	
+	EventBus.autosave_interval_changed.connect(_update_auto_save_timer)
+	_update_auto_save_timer(EventBus.current_autosave_interval)
+
+func _update_auto_save_timer(minutes: int) -> void:
+	if minutes <= 0:
+		auto_save_timer.stop()
+	else:
+		auto_save_timer.wait_time = minutes * 60.0
+		auto_save_timer.start()
+
+func _on_auto_save_timeout() -> void:
+	EventBus.save_project(get_current_state())
+
+func _on_manual_save_requested() -> void:
+	EventBus.save_project(get_current_state())
 
 func get_unique_layer_name(base_name: String) -> String:
 	var new_name = base_name

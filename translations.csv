@@ -20,3 +20,25 @@ UNIT_CM,Centimeters (cm),Centímetros (cm),Centímetros (cm)
 UNIT_M,Meters (m),Metros (m),Metros (m)
 UNIT_IN,Inches (in),Pulgadas (in),Polegadas (in)
 UI_NEW_LAYER,New Layer,Nueva Capa,Nova Camada
+UI_NEW_PROJECT,New Project,Nuevo Proyecto,Novo Projeto
+UI_PROJECT_NAME,Project Name,Nombre del proyecto,Nome do Projeto
+UI_MY_PLAN,My Plan,Mi Plano,Meu Plano
+UI_PAPER_SIZE,Paper Size,Tamaño de Hoja,Tamanho do Papel
+UI_CANVAS_CAPACITY,Canvas Capacity (Space),Capacidad del Lienzo (Espacio),Capacidade da Tela (Espaço)
+UI_CANCEL,Cancel,Cancelar,Cancelar
+UI_CREATE,Create,Crear,Criar
+UI_CAPACITY_PREVIEW,Capacity Preview,Vista Previa de Capacidad,Pré-visualização de Capacidade
+UI_MAX_SIZE_PREVIEW,"Max Width: %s %s\nMax Height: %s %s","Ancho máximo: %s %s\nAlto máximo: %s %s","Largura máxima: %s %s\nAltura máxima: %s %s"
+PAPER_LETTER,Letter,Carta (Letter),Carta (Letter)
+PAPER_LEGAL,Legal,Oficio (Legal),Ofício (Legal)
+SCALE_VERY_SMALL,Very Small,Muy Pequeño,Muito Pequeno
+SCALE_SMALL,Small,Pequeño,Pequeno
+SCALE_MEDIUM,Medium,Mediano,Médio
+SCALE_LARGE,Large,Grande,Grande
+SCALE_GIANT,Giant,Gigante,Gigante
+UI_AUTOSAVE,Auto-Save,Auto-Guardado,Salto Automático
+AUTOSAVE_OFF,Disabled,Desactivado,Desativado
+AUTOSAVE_3M,Every 3 minutes,Cada 3 minutos,A cada 3 minutos
+AUTOSAVE_5M,Every 5 minutes,Cada 5 minutos,A cada 5 minutos
+AUTOSAVE_10M,Every 10 minutes,Cada 10 minutos,A cada 10 minutos
+AUTOSAVE_20M,Every 20 minutes,Cada 20 minutos,A cada 20 minutos

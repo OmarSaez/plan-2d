@@ -88,8 +88,10 @@ func _ready() -> void:
 	_setup_language_options()
 	_setup_eraser_options()
 	_setup_unit_options()
+	_setup_autosave_options()
 	_setup_color_options()
 	_setup_auto_measure_btn()
+	_setup_archivo_buttons()
 	
 	var layer_panel = load("res://src/ui/layer_panel.gd").new()
 	layer_panel.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
@@ -118,9 +120,82 @@ func _initialize_heights() -> void:
 	base_content_height = vbox_tools.size.y
 	content_wrapper.custom_minimum_size.y = base_content_height
 	
-	collapsed_content_h = label_dibujo.size.y + 24 + 92
+	collapsed_content_h = tools_grid.size.y + 16
 	
-	_on_global_tool_selected("pen") # Activar visualmente lápiz
+	_on_global_tool_selected("pen")
+
+func _setup_archivo_buttons() -> void:
+	var archivo_lbl = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/LabelArchivo
+	var archivo_old_grid = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ArchivoGrid
+	
+	if archivo_old_grid:
+		archivo_old_grid.hide()
+		archivo_old_grid.queue_free()
+		
+		var archivo_vbox = VBoxContainer.new()
+		archivo_vbox.add_theme_constant_override("separation", 8)
+		var v_idx = archivo_lbl.get_index()
+		$Sidebar/Margin/VBox/ContentWrapper/VBoxTools.add_child(archivo_vbox)
+		$Sidebar/Margin/VBox/ContentWrapper/VBoxTools.move_child(archivo_vbox, v_idx + 1)
+		
+		var row1 = HBoxContainer.new()
+		row1.add_theme_constant_override("separation", 12)
+		archivo_vbox.add_child(row1)
+		
+		var row2 = HBoxContainer.new()
+		row2.add_theme_constant_override("separation", 12)
+		archivo_vbox.add_child(row2)
+		
+		var btn_save = _create_action_button("res://assets/icons/save.svg")
+		btn_save.pressed.connect(func(): EventBus.manual_save_requested.emit())
+		row1.add_child(btn_save)
+		
+		var btn_home = _create_action_button("res://assets/icons/home.svg")
+		btn_home.pressed.connect(func():
+			EventBus.manual_save_requested.emit()
+			get_tree().change_scene_to_file("res://src/ui/project_selector.tscn")
+		)
+		row1.add_child(btn_home)
+		
+		var btn_page_plus = _create_action_button("res://assets/icons/file-plus.svg")
+		row1.add_child(btn_page_plus)
+		
+		var btn_page_minus = _create_action_button("res://assets/icons/file-minus.svg")
+		row1.add_child(btn_page_minus)
+		
+		var btn_img = _create_action_button("res://assets/icons/image.svg")
+		row2.add_child(btn_img)
+		
+		var btn_pdf = _create_action_button("res://assets/icons/file-text.svg")
+		row2.add_child(btn_pdf)
+		
+		var btn_print = _create_action_button("res://assets/icons/printer.svg")
+		row2.add_child(btn_print)
+
+func _create_action_button(icon_path: String) -> Button:
+	var btn = Button.new()
+	btn.custom_minimum_size = Vector2(40, 40)
+	var tex = load(icon_path)
+	if tex:
+		btn.icon = tex
+		btn.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color(0.18, 0.20, 0.24)
+	sb.corner_radius_top_left = 12
+	sb.corner_radius_top_right = 12
+	sb.corner_radius_bottom_left = 12
+	sb.corner_radius_bottom_right = 12
+	
+	var sb_hover = sb.duplicate()
+	sb_hover.bg_color = Color(0.25, 0.28, 0.35)
+	
+	btn.add_theme_stylebox_override("normal", sb)
+	btn.add_theme_stylebox_override("hover", sb_hover)
+	btn.add_theme_stylebox_override("pressed", sb)
+	btn.add_theme_stylebox_override("focus", sb)
+	
+	return btn
 
 func _wrap_button_for_rotation(btn: Button) -> void:
 	var parent = btn.get_parent()
@@ -236,7 +311,6 @@ func _on_collapse_pressed() -> void:
 		dim_inputs_grid.columns = 1
 		dim_buttons_grid.columns = 1
 		
-		# Plegar: Reducir altura hasta las herramientas de dibujo
 		var target_h = collapsed_content_h
 		var dim_h = 0
 		if dim_panel.visible:
@@ -256,7 +330,6 @@ func _on_collapse_pressed() -> void:
 		dim_inputs_grid.columns = 2
 		dim_buttons_grid.columns = 2
 		
-		# Desplegar: Restaurar altura, ancho y rotar la flecha
 		var target_h = base_content_height
 		var dim_h = 0
 		if dim_panel.visible:
@@ -379,6 +452,37 @@ func _on_unit_selected(index: int) -> void:
 		EventBus.set_unit("m")
 	elif index == 3:
 		EventBus.set_unit("in")
+
+var autosave_option: OptionButton
+
+func _setup_autosave_options() -> void:
+	var lbl = Label.new()
+	lbl.text = tr("UI_AUTOSAVE")
+	lbl.add_theme_font_size_override("font_size", 10)
+	lbl.add_theme_color_override("font_color", Color(0.6, 0.65, 0.7))
+	vbox_lang.add_child(lbl)
+	
+	autosave_option = OptionButton.new()
+	autosave_option.add_item(tr("AUTOSAVE_OFF"), 0)
+	autosave_option.add_item(tr("AUTOSAVE_3M"), 3)
+	autosave_option.add_item(tr("AUTOSAVE_5M"), 5)
+	autosave_option.add_item(tr("AUTOSAVE_10M"), 10)
+	autosave_option.add_item(tr("AUTOSAVE_20M"), 20)
+	
+	var intervals = [0, 3, 5, 10, 20]
+	var current_idx = intervals.find(EventBus.current_autosave_interval)
+	if current_idx >= 0:
+		autosave_option.select(current_idx)
+	else:
+		autosave_option.select(1)
+		
+	autosave_option.item_selected.connect(_on_autosave_selected)
+	vbox_lang.add_child(autosave_option)
+
+func _on_autosave_selected(index: int) -> void:
+	var intervals = [0, 3, 5, 10, 20]
+	if index >= 0 and index < intervals.size():
+		EventBus.set_autosave_interval(intervals[index])
 
 var color_buttons: Array[Button] = []
 var active_color_btn: Button = null
