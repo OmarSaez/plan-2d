@@ -22,9 +22,10 @@ extends Control
 @onready var sidebar: PanelContainer = $Sidebar
 @onready var content_wrapper: Control = $Sidebar/Margin/VBox/ContentWrapper
 @onready var vbox_tools: VBoxContainer = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools
-@onready var tools_grid: GridContainer = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ToolsGrid
+@onready var tools_grid: HFlowContainer = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ToolsGrid
 @onready var color_grid: HBoxContainer = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ColorGrid
 @onready var label_dibujo: Label = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/LabelDibujo
+@onready var eye_btn: SquishyButton = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ProyGrid/EyeButton
 
 @onready var settings_widget: PanelContainer = $SettingsWidget
 @onready var settings_btn: SquishyButton = $SettingsWidget/Margin/VBox/Header/SettingsBtn
@@ -52,6 +53,9 @@ func _ready() -> void:
 	collapse_btn.pivot_offset = Vector2(16, 16)
 	settings_btn.tapped.connect(_on_settings_pressed)
 	
+	eye_btn.tapped.connect(_on_eye_pressed)
+	eye_btn.set_active(true)
+	
 	sidebar.custom_minimum_size.x = 248
 	sidebar.size.x = 248
 	
@@ -75,6 +79,7 @@ func _ready() -> void:
 	_setup_eraser_options()
 	_setup_unit_options()
 	_setup_color_options()
+	_setup_auto_measure_btn()
 	
 	var layer_panel = load("res://src/ui/layer_panel.gd").new()
 	layer_panel.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
@@ -90,7 +95,9 @@ func _ready() -> void:
 	vbox_tools.offset_left = 0
 	vbox_tools.offset_top = 0
 	
-	tools_grid.columns = 4
+	tools_grid.custom_minimum_size = Vector2(196, 92)
+	tools_grid.size = Vector2(196, 92)
+	tools_grid.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	
 	# Calcular la altura base dinámicamente en el siguiente frame
 	call_deferred("_initialize_heights")
@@ -101,7 +108,7 @@ func _initialize_heights() -> void:
 	base_content_height = vbox_tools.size.y
 	content_wrapper.custom_minimum_size.y = base_content_height
 	
-	collapsed_content_h = label_dibujo.size.y + 16 + tools_grid.size.y
+	collapsed_content_h = label_dibujo.size.y + 24 + 92
 	
 	_on_global_tool_selected("pen") # Activar visualmente lápiz
 
@@ -174,6 +181,10 @@ func _on_dim_cancel() -> void:
 	EventBus.perfect_dimensions_cancelled.emit()
 	EventBus.tool_selected.emit("pen")
 
+func _on_eye_pressed() -> void:
+	EventBus.toggle_measures_visibility()
+	eye_btn.set_active(EventBus.show_measures)
+
 func _on_collapse_pressed() -> void:
 	is_collapsed = !is_collapsed
 	
@@ -181,7 +192,9 @@ func _on_collapse_pressed() -> void:
 	tw.set_parallel(true)
 	
 	if is_collapsed:
-		tools_grid.columns = 3
+		auto_measure_btn.hide()
+		tools_grid.custom_minimum_size.x = 144
+		tools_grid.size.x = 144
 		dim_inputs_grid.columns = 1
 		dim_buttons_grid.columns = 1
 		
@@ -199,7 +212,9 @@ func _on_collapse_pressed() -> void:
 		tw.tween_property(sidebar, "size", Vector2(200, 96 + target_h), 0.4)
 		tw.tween_property(collapse_btn, "rotation_degrees", 180, 0.4)
 	else:
-		tools_grid.columns = 4
+		auto_measure_btn.show()
+		tools_grid.custom_minimum_size.x = 196
+		tools_grid.size.x = 196
 		dim_inputs_grid.columns = 2
 		dim_buttons_grid.columns = 2
 		
@@ -277,6 +292,42 @@ func _setup_unit_options() -> void:
 func _on_global_unit_changed(unit: String) -> void:
 	label_ancho.text = "ANCHO (%s)" % unit
 	label_alto.text = "ALTO (%s)" % unit
+
+var auto_measure_btn: Button
+
+func _setup_auto_measure_btn() -> void:
+	auto_measure_btn = Button.new()
+	auto_measure_btn.custom_minimum_size = Vector2(92, 40)
+	auto_measure_btn.text = "Medidas"
+	auto_measure_btn.add_theme_font_size_override("font_size", 12)
+	
+	_update_auto_measure_btn_style()
+	
+	auto_measure_btn.pressed.connect(func():
+		EventBus.auto_measure = !EventBus.auto_measure
+		_update_auto_measure_btn_style()
+	)
+	
+	tools_grid.add_child(auto_measure_btn)
+
+func _update_auto_measure_btn_style() -> void:
+	var sb = StyleBoxFlat.new()
+	sb.corner_radius_top_left = 12
+	sb.corner_radius_top_right = 12
+	sb.corner_radius_bottom_left = 12
+	sb.corner_radius_bottom_right = 12
+	
+	if EventBus.auto_measure:
+		sb.bg_color = Color(0.25, 0.28, 0.35)
+		auto_measure_btn.add_theme_color_override("font_color", Color.WHITE)
+	else:
+		sb.bg_color = Color(0.15, 0.17, 0.22)
+		auto_measure_btn.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		
+	auto_measure_btn.add_theme_stylebox_override("normal", sb)
+	auto_measure_btn.add_theme_stylebox_override("hover", sb)
+	auto_measure_btn.add_theme_stylebox_override("pressed", sb)
+	auto_measure_btn.add_theme_stylebox_override("focus", sb)
 
 func _on_unit_selected(index: int) -> void:
 	if index == 0:

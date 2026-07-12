@@ -179,11 +179,10 @@ theme_override_colors/font_color = Color(0.6, 0.65, 0.7, 1)
 theme_override_font_sizes/font_size = 10
 text = "UI_DRAW"
 
-[node name="ToolsGrid" type="GridContainer" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools"]
+[node name="ToolsGrid" type="HFlowContainer" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools"]
 layout_mode = 2
 theme_override_constants/h_separation = 12
 theme_override_constants/v_separation = 12
-columns = 5
 
 [node name="PenButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ToolsGrid"]
 custom_minimum_size = Vector2(40, 40)

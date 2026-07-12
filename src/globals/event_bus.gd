@@ -12,6 +12,14 @@ signal eraser_mode_changed(mode_id: String)
 signal layers_changed(layers_info: Array)
 signal active_layer_changed(index: int)
 signal camera_view_changed()
+signal measures_visibility_changed(visible: bool)
+
+var show_measures: bool = true
+var auto_measure: bool = true
+
+func toggle_measures_visibility() -> void:
+	show_measures = !show_measures
+	measures_visibility_changed.emit(show_measures)
 
 func emit_layers_changed(info: Array) -> void:
 	layers_changed.emit(info)

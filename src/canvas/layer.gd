@@ -23,6 +23,7 @@ func _ready() -> void:
 	default_font = ThemeDB.fallback_font
 	EventBus.unit_changed.connect(func(_u): queue_redraw())
 	EventBus.camera_view_changed.connect(func(): queue_redraw())
+	EventBus.measures_visibility_changed.connect(func(_v): queue_redraw())
 
 func clear() -> void:
 	lines.clear()
@@ -41,7 +42,12 @@ func add_point(point: Vector2) -> void:
 	current_line.append(point)
 	var text = EventBus.format_length(current_length_mm)
 	var offset = Vector2(0, -45).rotated(deg_to_rad(get_snapped_camera_angle()))
-	stroke_updated.emit([{"text": text, "pos": point + offset}])
+	
+	if EventBus.auto_measure and EventBus.show_measures:
+		stroke_updated.emit([{"text": text, "pos": point + offset}])
+	else:
+		stroke_updated.emit([])
+		
 	queue_redraw()
 
 func set_current_line(points: PackedVector2Array) -> void:
@@ -79,7 +85,10 @@ func set_current_line(points: PackedVector2Array) -> void:
 			var text = EventBus.format_length(current_length_mm)
 			bubbles_data.append({"text": text, "pos": current_line[-1] + offset})
 			
-		stroke_updated.emit(bubbles_data)
+		if EventBus.auto_measure and EventBus.show_measures:
+			stroke_updated.emit(bubbles_data)
+		else:
+			stroke_updated.emit([])
 	queue_redraw()
 
 func finish_line() -> void:
@@ -99,7 +108,8 @@ func finish_line() -> void:
 						"color": EventBus.current_color,
 						"label_angle": get_snapped_camera_angle(),
 						"label_offset_t": 0.5,
-						"label_side": default_sides[i]
+						"label_side": default_sides[i],
+						"show_measure": EventBus.auto_measure
 					})
 		else:
 			lines.append({
@@ -109,7 +119,8 @@ func finish_line() -> void:
 				"color": EventBus.current_color,
 				"label_angle": get_snapped_camera_angle(),
 				"label_offset_t": 0.5,
-				"label_side": 1
+				"label_side": 1,
+				"show_measure": EventBus.auto_measure
 			})
 	current_line = PackedVector2Array()
 	current_length_mm = 0.0
@@ -181,7 +192,8 @@ func erase_area(polygon: PackedVector2Array) -> bool:
 					"color": line_data.get("color", Color.BLACK),
 					"label_angle": line_data.get("label_angle", 0.0),
 					"label_offset_t": line_data.get("label_offset_t", 0.5),
-					"label_side": line_data.get("label_side", 1)
+					"label_side": line_data.get("label_side", 1),
+					"show_measure": line_data.get("show_measure", true)
 				})
 				
 	if erased_something:
@@ -255,6 +267,8 @@ func get_label_position(line_data: Dictionary) -> Vector2:
 		return pos + Vector2(0, -15 * side) # Desplazamiento simple para a pulso
 
 func _draw_length_text(line_data: Dictionary) -> void:
+	if not EventBus.show_measures: return
+	if not line_data.get("show_measure", true): return
 	if line_data["points"].size() < 2 or default_font == null: return
 	
 	var type = line_data.get("type", "freehand")
