@@ -1,0 +1,22 @@
+id,en,es,pt
+TOOL_PEN,Pen,Lápiz,Caneta
+TOOL_RULER,Ruler,Regla,Régua
+TOOL_RECTANGLE,Rectangle,Rectángulo,Retângulo
+TOOL_PERFECT,Perfect,Perfecto,Perfeito
+UI_TOOLS,TOOLS,HERRAMIENTAS,FERRAMENTAS
+UI_DRAW,DRAW,DIBUJO,DESENHO
+UI_COLOR,COLOR,COLOR,COR
+UI_PROJECT,PROJECT,PROYECTO,PROJETO
+UI_FILE,FILE,ARCHIVO,ARQUIVO
+UI_SETTINGS,Settings,Ajustes,Configurações
+UI_LANGUAGE,Language,Idioma,Idioma
+UI_ERASER_MODE,Eraser Mode,Modo Borrador,Modo Borracha
+MODE_AREA,By Area,Por Área,Por Área
+MODE_STROKE,By Stroke,Por Trazos,Por Traços
+UI_TOOL_LABEL,Labeling,Etiquetado,Rotulagem
+UI_MEASUREMENT_UNIT,Measurement Unit,Unidad de Medida,Unidade de Medida
+UNIT_MM,Millimeters (mm),Milímetros (mm),Milímetros (mm)
+UNIT_CM,Centimeters (cm),Centímetros (cm),Centímetros (cm)
+UNIT_M,Meters (m),Metros (m),Metros (m)
+UNIT_IN,Inches (in),Pulgadas (in),Polegadas (in)
+UI_NEW_LAYER,New Layer,Nueva Capa,Nova Camada

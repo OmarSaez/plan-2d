@@ -1,0 +1,409 @@
+[gd_scene load_steps=22 format=3 uid="uid://cy8xxxgx"]
+
+[ext_resource type="Script" path="res://src/ui/main_ui.gd" id="1_xxx"]
+[ext_resource type="Script" path="res://src/ui/squishy_button.gd" id="2_xxx"]
+[ext_resource type="Texture2D" path="res://assets/icons/pen-tool.svg" id="3_pen"]
+[ext_resource type="Texture2D" path="res://assets/icons/ruler.svg" id="4_ruler"]
+[ext_resource type="Texture2D" path="res://assets/icons/square.svg" id="5_square"]
+[ext_resource type="Texture2D" path="res://assets/icons/layout-grid.svg" id="6_grid"]
+[ext_resource type="Texture2D" path="res://assets/icons/eraser.svg" id="7_eraser"]
+[ext_resource type="Texture2D" path="res://assets/icons/check.svg" id="8_check"]
+[ext_resource type="Texture2D" path="res://assets/icons/x.svg" id="9_x"]
+[ext_resource type="Texture2D" path="res://assets/icons/chevron-up.svg" id="10_up"]
+[ext_resource type="Texture2D" path="res://assets/icons/undo-2.svg" id="11_undo"]
+[ext_resource type="Texture2D" path="res://assets/icons/grid-3x3.svg" id="12_grid3"]
+[ext_resource type="Texture2D" path="res://assets/icons/sun.svg" id="13_sun"]
+[ext_resource type="Texture2D" path="res://assets/icons/eye.svg" id="14_eye"]
+[ext_resource type="Texture2D" path="res://assets/icons/file-plus.svg" id="15_new"]
+[ext_resource type="Texture2D" path="res://assets/icons/image.svg" id="16_img"]
+[ext_resource type="Texture2D" path="res://assets/icons/mouse-pointer-2.svg" id="21_label"]
+[ext_resource type="Texture2D" path="res://assets/icons/file-text.svg" id="17_file"]
+[ext_resource type="Texture2D" path="res://assets/icons/printer.svg" id="18_print"]
+[ext_resource type="Texture2D" path="res://assets/icons/settings.svg" id="19_settings"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.11, 0.12, 0.15, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sep"]
+bg_color = Color(0.2, 0.22, 0.26, 1)
+
+[node name="MainUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_xxx")
+
+[node name="SettingsWidget" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -72.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = 72.0
+grow_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+clip_contents = true
+
+[node name="Margin" type="MarginContainer" parent="SettingsWidget"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="SettingsWidget/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Header" type="HBoxContainer" parent="SettingsWidget/Margin/VBox"]
+layout_mode = 2
+alignment = 2
+
+[node name="Label" type="Label" parent="SettingsWidget/Margin/VBox/Header"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.65, 0.7, 1)
+theme_override_font_sizes/font_size = 12
+text = "UI_SETTINGS"
+
+[node name="SettingsBtn" type="Button" parent="SettingsWidget/Margin/VBox/Header"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+icon = ExtResource("19_settings")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="Content" type="Control" parent="SettingsWidget/Margin/VBox"]
+clip_contents = true
+layout_mode = 2
+
+[node name="VBoxLang" type="VBoxContainer" parent="SettingsWidget/Margin/VBox/Content"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="LabelLang" type="Label" parent="SettingsWidget/Margin/VBox/Content/VBoxLang"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+text = "UI_LANGUAGE"
+
+[node name="LangOption" type="OptionButton" parent="SettingsWidget/Margin/VBox/Content/VBoxLang"]
+layout_mode = 2
+
+[node name="LabelEraser" type="Label" parent="SettingsWidget/Margin/VBox/Content/VBoxLang"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+text = "UI_ERASER_MODE"
+
+[node name="EraserOption" type="OptionButton" parent="SettingsWidget/Margin/VBox/Content/VBoxLang"]
+layout_mode = 2
+
+[node name="UnitLabel" type="Label" parent="SettingsWidget/Margin/VBox/Content/VBoxLang"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+text = "UI_MEASUREMENT_UNIT"
+
+[node name="UnitOption" type="OptionButton" parent="SettingsWidget/Margin/VBox/Content/VBoxLang"]
+layout_mode = 2
+
+[node name="Sidebar" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 320.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+clip_contents = true
+
+[node name="Margin" type="MarginContainer" parent="Sidebar"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="Sidebar/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Header" type="HBoxContainer" parent="Sidebar/Margin/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Sidebar/Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.65, 0.7, 1)
+theme_override_font_sizes/font_size = 12
+text = "UI_TOOLS"
+
+[node name="CollapseBtn" type="Button" parent="Sidebar/Margin/VBox/Header"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+icon = ExtResource("10_up")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="ContentWrapper" type="Control" parent="Sidebar/Margin/VBox"]
+clip_contents = true
+layout_mode = 2
+
+[node name="VBoxTools" type="VBoxContainer" parent="Sidebar/Margin/VBox/ContentWrapper"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+
+[node name="LabelDibujo" type="Label" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+text = "UI_DRAW"
+
+[node name="ToolsGrid" type="GridContainer" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools"]
+layout_mode = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+columns = 5
+
+[node name="PenButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ToolsGrid"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+tooltip_text = "TOOL_PEN"
+icon = ExtResource("3_pen")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="RulerButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ToolsGrid"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+tooltip_text = "TOOL_RULER"
+icon = ExtResource("4_ruler")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="RectangleButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ToolsGrid"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+tooltip_text = "TOOL_RECTANGLE"
+icon = ExtResource("5_square")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="PerfectButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ToolsGrid"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+tooltip_text = "TOOL_PERFECT"
+icon = ExtResource("6_grid")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="LabelButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ToolsGrid"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+tooltip_text = "UI_TOOL_LABEL"
+icon = ExtResource("21_label")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="EraserButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ToolsGrid"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+tooltip_text = "Borrador"
+icon = ExtResource("7_eraser")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="DimWrapper" type="Control" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools"]
+clip_contents = true
+layout_mode = 2
+
+[node name="DimensionsPanel" type="VBoxContainer" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+text = "DIMENSIONES"
+
+[node name="HBoxContainer" type="GridContainer" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel"]
+layout_mode = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+columns = 2
+
+[node name="VBoxWidth" type="VBoxContainer" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/HBoxContainer/VBoxWidth"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.7, 1)
+theme_override_font_sizes/font_size = 8
+text = "ANCHO"
+
+[node name="WidthInput" type="LineEdit" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/HBoxContainer/VBoxWidth"]
+layout_mode = 2
+text = "100"
+
+[node name="VBoxHeight" type="VBoxContainer" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/HBoxContainer/VBoxHeight"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.7, 1)
+theme_override_font_sizes/font_size = 8
+text = "ALTO"
+
+[node name="HeightInput" type="LineEdit" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/HBoxContainer/VBoxHeight"]
+layout_mode = 2
+text = "100"
+
+[node name="ButtonsHBox" type="GridContainer" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel"]
+layout_mode = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+columns = 2
+
+[node name="CancelButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/ButtonsHBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+size_flags_horizontal = 3
+icon = ExtResource("9_x")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="ConfirmButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/ButtonsHBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+size_flags_horizontal = 3
+icon = ExtResource("8_check")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="Sep1" type="Panel" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_sep")
+
+[node name="LabelColor" type="Label" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+text = "UI_COLOR"
+
+[node name="ColorGrid" type="HBoxContainer" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Sep2" type="Panel" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_sep")
+
+[node name="LabelProy" type="Label" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+text = "UI_PROJECT"
+
+[node name="ProyGrid" type="HBoxContainer" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="UndoButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ProyGrid"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+icon = ExtResource("11_undo")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="GridButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ProyGrid"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+icon = ExtResource("12_grid3")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="SunButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ProyGrid"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+icon = ExtResource("13_sun")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="EyeButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ProyGrid"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+icon = ExtResource("14_eye")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="Sep3" type="Panel" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_sep")
+
+[node name="LabelArchivo" type="Label" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+text = "UI_FILE"
+
+[node name="ArchivoGrid" type="HBoxContainer" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="NewButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ArchivoGrid"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+icon = ExtResource("15_new")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="ImgButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ArchivoGrid"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+icon = ExtResource("16_img")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="FileButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ArchivoGrid"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+icon = ExtResource("17_file")
+icon_alignment = 1
+script = ExtResource("2_xxx")
+
+[node name="PrintButton" type="Button" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ArchivoGrid"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+icon = ExtResource("18_print")
+icon_alignment = 1
+script = ExtResource("2_xxx")
