@@ -80,7 +80,7 @@ func _ready() -> void:
 	
 	add_btn = _create_icon_btn(plus_icon, 30)
 	add_btn.pressed.connect(func():
-		var canvas = get_tree().current_scene.get_node("CanvasManager")
+		var canvas = get_tree().current_scene.get_node("Workspace/CanvasManager")
 		if canvas: canvas.add_layer(tr("UI_NEW_LAYER"))
 	)
 	add_btn_wrapper.add_child(add_btn)
@@ -120,7 +120,7 @@ func _ready() -> void:
 	call_deferred("_load_initial_layers")
 
 func _load_initial_layers() -> void:
-	var canvas = get_tree().current_scene.get_node_or_null("CanvasManager")
+	var canvas = get_tree().current_scene.get_node_or_null("Workspace/CanvasManager")
 	if canvas:
 		_on_layers_changed(canvas._get_layers_info())
 
@@ -179,7 +179,7 @@ func _build_confirm_dialog() -> void:
 	btn_yes.add_theme_stylebox_override("normal", btn_sb)
 	btn_yes.add_theme_stylebox_override("hover", btn_sb_hover)
 	btn_yes.pressed.connect(func():
-		var canvas = get_tree().current_scene.get_node("CanvasManager")
+		var canvas = get_tree().current_scene.get_node("Workspace/CanvasManager")
 		if canvas: canvas.remove_layer(layer_to_delete)
 		hide_confirm_delete()
 	)
@@ -254,7 +254,7 @@ func _on_layers_changed(layers_info: Array) -> void:
 	for c in list_vbox.get_children():
 		c.queue_free()
 	
-	var canvas = get_tree().current_scene.get_node("CanvasManager")
+	var canvas = get_tree().current_scene.get_node("Workspace/CanvasManager")
 	if not canvas: return
 	
 	for i in range(layers_info.size()):
@@ -265,7 +265,7 @@ func _on_layers_changed(layers_info: Array) -> void:
 	call_deferred("_update_panel_height")
 
 func _on_active_layer_changed(index: int) -> void:
-	var canvas = get_tree().current_scene.get_node("CanvasManager")
+	var canvas = get_tree().current_scene.get_node("Workspace/CanvasManager")
 	if canvas:
 		_on_layers_changed(canvas._get_layers_info())
 
@@ -293,7 +293,7 @@ func _create_layer_item(index: int, info: Dictionary, is_active: bool) -> PanelC
 	
 	panel.gui_input.connect(func(event):
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			var canvas = get_tree().current_scene.get_node("CanvasManager")
+			var canvas = get_tree().current_scene.get_node("Workspace/CanvasManager")
 			if canvas: canvas.set_active_layer(index)
 	)
 	
@@ -310,7 +310,7 @@ func _create_layer_item(index: int, info: Dictionary, is_active: bool) -> PanelC
 	var eye_btn = _create_icon_btn(eye_icon if info.visible else eye_off_icon, 24)
 	eye_btn.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	eye_btn.pressed.connect(func():
-		var canvas = get_tree().current_scene.get_node("CanvasManager")
+		var canvas = get_tree().current_scene.get_node("Workspace/CanvasManager")
 		if canvas: canvas.toggle_layer_visibility(index)
 	)
 	hbox.add_child(eye_btn)
@@ -328,7 +328,7 @@ func _create_layer_item(index: int, info: Dictionary, is_active: bool) -> PanelC
 	hbox.add_child(line_edit)
 	
 	line_edit.text_submitted.connect(func(new_text):
-		var canvas = get_tree().current_scene.get_node("CanvasManager")
+		var canvas = get_tree().current_scene.get_node("Workspace/CanvasManager")
 		if canvas: canvas.rename_layer(index, new_text)
 	)
 	

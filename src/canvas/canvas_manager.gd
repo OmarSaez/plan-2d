@@ -149,5 +149,5 @@ func _on_stroke_finished() -> void:
 
 # El input es ahora relativo a la hoja de papel
 func _on_paper_gui_input(event: InputEvent) -> void:
-	if get_node_or_null("../ToolManager"):
-		$"../ToolManager".process_canvas_input(event)
+	if get_node_or_null("../../ToolManager"):
+		$"../../ToolManager".process_canvas_input(event)
