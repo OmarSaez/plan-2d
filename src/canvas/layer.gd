@@ -6,7 +6,6 @@ var current_line: PackedVector2Array = PackedVector2Array()
 var current_length_mm: float = 0.0
 var current_shape_type: String = "freehand"
 
-var line_color: Color = Color.BLACK
 var line_width: float = 2.0
 var pixels_per_mm: float = 1.0 
 var default_font: Font
@@ -90,6 +89,7 @@ func finish_line() -> void:
 						"points": PackedVector2Array([p1, p2]),
 						"length_mm": dist,
 						"type": "straight",
+						"color": EventBus.current_color,
 						"label_offset_t": 0.5,
 						"label_side": default_sides[i]
 					})
@@ -98,6 +98,7 @@ func finish_line() -> void:
 				"points": current_line,
 				"length_mm": current_length_mm,
 				"type": current_shape_type,
+				"color": EventBus.current_color,
 				"label_offset_t": 0.5,
 				"label_side": 1
 			})
@@ -168,6 +169,7 @@ func erase_area(polygon: PackedVector2Array) -> bool:
 					"points": part,
 					"length_mm": new_length,
 					"type": line_data.get("type", "freehand"),
+					"color": line_data.get("color", Color.BLACK),
 					"label_offset_t": line_data.get("label_offset_t", 0.5),
 					"label_side": line_data.get("label_side", 1)
 				})
@@ -181,11 +183,11 @@ func _draw() -> void:
 	for line_data in lines:
 		var pts: PackedVector2Array = line_data["points"]
 		if pts.size() > 1:
-			draw_polyline(pts, line_color, line_width, true)
+			draw_polyline(pts, line_data.get("color", Color.BLACK), line_width, true)
 			_draw_length_text(line_data)
 	
 	if current_line.size() > 1:
-		draw_polyline(current_line, line_color, line_width, true)
+		draw_polyline(current_line, EventBus.current_color, line_width, true)
 		
 	if show_eraser_cursor:
 		if eraser_mode == "area":

@@ -21,6 +21,7 @@ extends Control
 @onready var content_wrapper: Control = $Sidebar/Margin/VBox/ContentWrapper
 @onready var vbox_tools: VBoxContainer = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools
 @onready var tools_grid: GridContainer = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ToolsGrid
+@onready var color_grid: HBoxContainer = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/ColorGrid
 @onready var label_dibujo: Label = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/LabelDibujo
 
 @onready var settings_widget: PanelContainer = $SettingsWidget
@@ -70,6 +71,7 @@ func _ready() -> void:
 	_setup_language_options()
 	_setup_eraser_options()
 	_setup_unit_options()
+	_setup_color_options()
 	
 	var layer_panel = load("res://src/ui/layer_panel.gd").new()
 	layer_panel.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
@@ -277,6 +279,113 @@ func _on_unit_selected(index: int) -> void:
 		EventBus.set_unit("m")
 	elif index == 3:
 		EventBus.set_unit("in")
+
+var color_buttons: Array[Button] = []
+var active_color_btn: Button = null
+var hidden_color_popup: PopupPanel
+var color_picker: ColorPicker
+
+func _setup_color_options() -> void:
+	var colors = [
+		Color.BLACK,
+		Color("#FF4B4B"),
+		Color("#20C96F"),
+		Color("#3B82F6")
+	]
+	
+	for c in colors:
+		var btn = _create_color_button(c)
+		color_buttons.append(btn)
+		color_grid.add_child(btn)
+		btn.pressed.connect(func(): _on_color_selected(btn, c))
+		
+	var custom_btn = Button.new()
+	custom_btn.custom_minimum_size = Vector2(30, 30)
+	custom_btn.icon = load("res://assets/icons/palette.svg")
+	custom_btn.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	custom_btn.expand_icon = true
+	
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color(0.18, 0.20, 0.24)
+	sb.corner_radius_top_left = 15
+	sb.corner_radius_top_right = 15
+	sb.corner_radius_bottom_left = 15
+	sb.corner_radius_bottom_right = 15
+	sb.border_width_left = 2
+	sb.border_width_top = 2
+	sb.border_width_right = 2
+	sb.border_width_bottom = 2
+	sb.border_color = Color(0, 0, 0, 0)
+	
+	custom_btn.add_theme_stylebox_override("normal", sb)
+	custom_btn.add_theme_stylebox_override("hover", sb)
+	custom_btn.add_theme_stylebox_override("pressed", sb)
+	custom_btn.add_theme_stylebox_override("focus", sb)
+	
+	color_buttons.append(custom_btn)
+	color_grid.add_child(custom_btn)
+	
+	hidden_color_popup = PopupPanel.new()
+	var popup_style = StyleBoxFlat.new()
+	popup_style.bg_color = Color(0.12, 0.13, 0.16)
+	popup_style.corner_radius_top_left = 12
+	popup_style.corner_radius_top_right = 12
+	popup_style.corner_radius_bottom_left = 12
+	popup_style.corner_radius_bottom_right = 12
+	hidden_color_popup.add_theme_stylebox_override("panel", popup_style)
+	
+	color_picker = ColorPicker.new()
+	hidden_color_popup.add_child(color_picker)
+	add_child(hidden_color_popup)
+	
+	custom_btn.pressed.connect(func():
+		hidden_color_popup.popup_centered()
+	)
+	
+	color_picker.color_changed.connect(func(c):
+		sb.bg_color = c
+		custom_btn.icon = null
+		_on_color_selected(custom_btn, c)
+	)
+	
+	_on_color_selected(color_buttons[0], colors[0])
+
+func _create_color_button(c: Color) -> Button:
+	var btn = Button.new()
+	btn.custom_minimum_size = Vector2(30, 30)
+	
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = c
+	sb.corner_radius_top_left = 15
+	sb.corner_radius_top_right = 15
+	sb.corner_radius_bottom_left = 15
+	sb.corner_radius_bottom_right = 15
+	sb.border_width_left = 2
+	sb.border_width_top = 2
+	sb.border_width_right = 2
+	sb.border_width_bottom = 2
+	sb.border_color = Color(0, 0, 0, 0)
+	
+	btn.add_theme_stylebox_override("normal", sb)
+	btn.add_theme_stylebox_override("hover", sb)
+	btn.add_theme_stylebox_override("pressed", sb)
+	btn.add_theme_stylebox_override("focus", sb)
+	return btn
+
+func _on_color_selected(btn: Button, c: Color) -> void:
+	if active_color_btn:
+		var old_sb = active_color_btn.get_theme_stylebox("normal")
+		old_sb.border_color = Color(0, 0, 0, 0)
+		old_sb.shadow_color = Color(0, 0, 0, 0)
+		old_sb.shadow_size = 0
+		
+	active_color_btn = btn
+	var new_sb = active_color_btn.get_theme_stylebox("normal")
+	new_sb.border_color = Color(1.0, 1.0, 1.0, 0.9)
+	new_sb.shadow_color = Color(1.0, 1.0, 1.0, 0.4)
+	new_sb.shadow_size = 4
+	
+	EventBus.set_color(c)
 
 func _on_settings_pressed() -> void:
 	is_settings_open = !is_settings_open

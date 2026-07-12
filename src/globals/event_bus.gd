@@ -24,6 +24,12 @@ func emit_tool_selected(tool_id: String) -> void:
 func emit_tool_action_cancelled() -> void:
 	tool_action_cancelled.emit()
 
+var current_color: Color = Color.BLACK
+
+func set_color(c: Color) -> void:
+	current_color = c
+	color_changed.emit(c)
+
 var current_eraser_mode: String = "stroke"
 var current_language: String = "en"
 var current_unit: String = "mm"
