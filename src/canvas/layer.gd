@@ -22,6 +22,7 @@ signal stroke_finished()
 func _ready() -> void:
 	default_font = ThemeDB.fallback_font
 	EventBus.unit_changed.connect(func(_u): queue_redraw())
+	EventBus.camera_view_changed.connect(func(): queue_redraw())
 
 func clear() -> void:
 	lines.clear()
@@ -39,7 +40,8 @@ func add_point(point: Vector2) -> void:
 	
 	current_line.append(point)
 	var text = EventBus.format_length(current_length_mm)
-	stroke_updated.emit([{"text": text, "pos": point + Vector2(15, -35)}])
+	var offset = Vector2(0, -45).rotated(deg_to_rad(get_snapped_camera_angle()))
+	stroke_updated.emit([{"text": text, "pos": point + offset}])
 	queue_redraw()
 
 func set_current_line(points: PackedVector2Array) -> void:
@@ -50,7 +52,7 @@ func set_current_line(points: PackedVector2Array) -> void:
 		
 	if points.size() > 0:
 		var bubbles_data = []
-		if current_shape_type == "rectangle" and points.size() == 5:
+		if (current_shape_type == "rectangle" or current_shape_type == "perfect") and points.size() == 5:
 			var w = points[0].distance_to(points[1]) / pixels_per_mm
 			var h = points[1].distance_to(points[2]) / pixels_per_mm
 			
@@ -59,18 +61,23 @@ func set_current_line(points: PackedVector2Array) -> void:
 			var bottom_center = (points[2] + points[3]) / 2.0
 			
 			# Main bubble (W x H) top
-			bubbles_data.append({"text": "%s x %s" % [EventBus.format_length(w), EventBus.format_length(h)], "pos": top_center + Vector2(-45, -35)})
+			var offset_up = Vector2(0, -45).rotated(deg_to_rad(get_snapped_camera_angle()))
+			var offset_down = Vector2(0, 25).rotated(deg_to_rad(get_snapped_camera_angle()))
+			var offset_right = Vector2(35, 0).rotated(deg_to_rad(get_snapped_camera_angle()))
+			
+			bubbles_data.append({"text": "%s x %s" % [EventBus.format_length(w), EventBus.format_length(h)], "pos": top_center + offset_up})
 			
 			# Width bubble bottom
 			if w >= 0.1:
-				bubbles_data.append({"text": EventBus.format_length(w), "pos": bottom_center + Vector2(-25, 10)})
+				bubbles_data.append({"text": EventBus.format_length(w), "pos": bottom_center + offset_down})
 			
 			# Height bubble right
 			if h >= 0.1:
-				bubbles_data.append({"text": EventBus.format_length(h), "pos": right_center + Vector2(10, -10)})
-		if current_length_mm > 0.1:
+				bubbles_data.append({"text": EventBus.format_length(h), "pos": right_center + offset_right})
+		elif current_length_mm > 0.1:
+			var offset = Vector2(0, -45).rotated(deg_to_rad(get_snapped_camera_angle()))
 			var text = EventBus.format_length(current_length_mm)
-			bubbles_data.append({"text": text, "pos": current_line[-1] + Vector2(20, -20)})
+			bubbles_data.append({"text": text, "pos": current_line[-1] + offset})
 			
 		stroke_updated.emit(bubbles_data)
 	queue_redraw()
@@ -90,6 +97,7 @@ func finish_line() -> void:
 						"length_mm": dist,
 						"type": "straight",
 						"color": EventBus.current_color,
+						"label_angle": get_snapped_camera_angle(),
 						"label_offset_t": 0.5,
 						"label_side": default_sides[i]
 					})
@@ -99,6 +107,7 @@ func finish_line() -> void:
 				"length_mm": current_length_mm,
 				"type": current_shape_type,
 				"color": EventBus.current_color,
+				"label_angle": get_snapped_camera_angle(),
 				"label_offset_t": 0.5,
 				"label_side": 1
 			})
@@ -170,6 +179,7 @@ func erase_area(polygon: PackedVector2Array) -> bool:
 					"length_mm": new_length,
 					"type": line_data.get("type", "freehand"),
 					"color": line_data.get("color", Color.BLACK),
+					"label_angle": line_data.get("label_angle", 0.0),
 					"label_offset_t": line_data.get("label_offset_t", 0.5),
 					"label_side": line_data.get("label_side", 1)
 				})
@@ -254,6 +264,7 @@ func _draw_length_text(line_data: Dictionary) -> void:
 	var geometric_center = get_label_position(line_data)
 	var text = EventBus.format_length(line_data["length_mm"])
 	var angle_deg = line_data.get("label_angle", 0.0)
+	
 	var text_size = default_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14) if default_font else Vector2(60, 14)
 	
 	var draw_pos = geometric_center
@@ -294,3 +305,10 @@ func update_line_label_angle(index: int, angle_deg: float) -> void:
 	if index >= 0 and index < lines.size():
 		lines[index]["label_angle"] = fmod(angle_deg, 360.0)
 		queue_redraw()
+
+func get_snapped_camera_angle() -> float:
+	var cam_rot = 0.0
+	var cam = get_viewport().get_camera_2d()
+	if cam:
+		cam_rot = cam.rotation
+	return rad_to_deg(snapped(cam_rot, PI/2.0))

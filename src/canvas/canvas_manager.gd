@@ -22,6 +22,7 @@ func _ready() -> void:
 	add_child(paper_rect)
 
 	EventBus.clear_canvas_requested.connect(_on_clear_requested)
+	EventBus.camera_view_changed.connect(_on_camera_view_changed)
 
 	add_layer(tr("UI_NEW_LAYER"))
 	set_active_layer(0)
@@ -109,6 +110,18 @@ func _on_clear_requested() -> void:
 		layer.clear()
 	update_bubbles([])
 
+func _on_camera_view_changed() -> void:
+	var cam_rot = 0.0
+	var cam = get_viewport().get_camera_2d()
+	if cam:
+		cam_rot = cam.rotation
+	var snapped_cam_rot = snapped(cam_rot, PI/2.0)
+	for b in bubbles:
+		if b.visible:
+			b.reset_size()
+			b.pivot_offset = b.size / 2.0
+			b.rotation = snapped_cam_rot
+
 func _create_bubble() -> Label:
 	var b = Label.new()
 	var style = StyleBoxFlat.new()
@@ -129,6 +142,12 @@ func _create_bubble() -> Label:
 
 
 func update_bubbles(bubbles_data: Array) -> void:
+	var cam_rot = 0.0
+	var cam = get_viewport().get_camera_2d()
+	if cam:
+		cam_rot = cam.rotation
+	var snapped_cam_rot = snapped(cam_rot, PI/2.0)
+	
 	# Crear más burbujas si hacen falta
 	while bubbles.size() < bubbles_data.size():
 		bubbles.append(_create_bubble())
@@ -137,7 +156,11 @@ func update_bubbles(bubbles_data: Array) -> void:
 		if i < bubbles_data.size():
 			bubbles[i].visible = true
 			bubbles[i].text = bubbles_data[i]["text"]
-			bubbles[i].position = paper_rect.position + bubbles_data[i]["pos"]
+			bubbles[i].reset_size()
+			bubbles[i].pivot_offset = bubbles[i].size / 2.0
+			# Centrar la burbuja en pos (pos - mitad de la burbuja)
+			bubbles[i].position = paper_rect.position + bubbles_data[i]["pos"] - bubbles[i].size / 2.0
+			bubbles[i].rotation = snapped_cam_rot
 		else:
 			bubbles[i].hide()
 

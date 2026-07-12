@@ -111,6 +111,7 @@ func _zoom_at_point(factor: float, screen_pos: Vector2) -> void:
 	position -= screen_delta.rotated(rotation) / zoom.x
 
 func update_hud() -> void:
+	EventBus.camera_view_changed.emit()
 	if info_label:
 		info_label.text = "Zoom: %d%%  |  Rot: %d°  |  Pos: X %d, Y %d" % [
 			int(zoom.x * 100),

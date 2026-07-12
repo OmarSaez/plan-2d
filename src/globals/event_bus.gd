@@ -11,6 +11,7 @@ signal color_changed(new_color: Color)
 signal eraser_mode_changed(mode_id: String)
 signal layers_changed(layers_info: Array)
 signal active_layer_changed(index: int)
+signal camera_view_changed()
 
 func emit_layers_changed(info: Array) -> void:
 	layers_changed.emit(info)
@@ -76,6 +77,13 @@ func format_length(length_mm: float) -> String:
 		"m": return "%.2f m" % (length_mm / 1000.0)
 		"in": return "%.2f in" % (length_mm / 25.4)
 		_: return "%.1f mm" % length_mm
+
+func parse_input_to_mm(val: float) -> float:
+	match current_unit:
+		"cm": return val * 10.0
+		"m": return val * 1000.0
+		"in": return val * 25.4
+		_: return val
 
 func _save_settings() -> void:
 	var config = ConfigFile.new()

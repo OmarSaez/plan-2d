@@ -13,6 +13,8 @@ extends Control
 @onready var dim_buttons_grid: GridContainer = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/ButtonsHBox
 @onready var width_input: LineEdit = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/HBoxContainer/VBoxWidth/WidthInput
 @onready var height_input: LineEdit = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/HBoxContainer/VBoxHeight/HeightInput
+@onready var label_ancho: Label = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/HBoxContainer/VBoxWidth/Label
+@onready var label_alto: Label = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/HBoxContainer/VBoxHeight/Label
 @onready var confirm_btn: SquishyButton = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/ButtonsHBox/ConfirmButton
 @onready var cancel_btn: SquishyButton = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/ButtonsHBox/CancelButton
 
@@ -67,6 +69,7 @@ func _ready() -> void:
 	settings_content.hide()
 	
 	EventBus.tool_selected.connect(_on_global_tool_selected)
+	EventBus.unit_changed.connect(_on_global_unit_changed)
 	
 	_setup_language_options()
 	_setup_eraser_options()
@@ -162,8 +165,8 @@ func _animate_dim_panel(show: bool) -> void:
 		tw.chain().tween_callback(func(): dim_panel.hide())
 
 func _on_dim_confirm() -> void:
-	var w = float(width_input.text)
-	var h = float(height_input.text)
+	var w = EventBus.parse_input_to_mm(float(width_input.text))
+	var h = EventBus.parse_input_to_mm(float(height_input.text))
 	EventBus.perfect_dimensions_confirmed.emit(w, h)
 
 func _on_dim_cancel() -> void:
@@ -269,6 +272,11 @@ func _setup_unit_options() -> void:
 		unit_option.select(0)
 		
 	unit_option.item_selected.connect(_on_unit_selected)
+	_on_global_unit_changed(EventBus.current_unit)
+
+func _on_global_unit_changed(unit: String) -> void:
+	label_ancho.text = "ANCHO (%s)" % unit
+	label_alto.text = "ALTO (%s)" % unit
 
 func _on_unit_selected(index: int) -> void:
 	if index == 0:
