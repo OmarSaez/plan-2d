@@ -50,11 +50,7 @@ func add_point(point: Vector2) -> void:
 	var text = EventBus.format_length(current_length_px)
 	var offset = Vector2(0, -45 * offset_scale).rotated(deg_to_rad(get_snapped_camera_angle()))
 	
-	if EventBus.auto_measure and EventBus.show_measures:
-		stroke_updated.emit([{"text": text, "pos": point + offset}])
-	else:
-		stroke_updated.emit([])
-		
+	stroke_updated.emit([{"text": text, "pos": point + offset}])
 	queue_redraw()
 
 func set_current_line(points: PackedVector2Array) -> void:
@@ -92,10 +88,7 @@ func set_current_line(points: PackedVector2Array) -> void:
 			var text = EventBus.format_length(current_length_px)
 			bubbles_data.append({"text": text, "pos": current_line[-1] + offset})
 			
-		if EventBus.auto_measure and EventBus.show_measures:
-			stroke_updated.emit(bubbles_data)
-		else:
-			stroke_updated.emit([])
+		stroke_updated.emit(bubbles_data)
 	queue_redraw()
 
 func finish_line() -> void:
@@ -116,7 +109,7 @@ func finish_line() -> void:
 						"label_angle": get_snapped_camera_angle(),
 						"label_offset_t": 0.5,
 						"label_side": default_sides[i],
-						"show_measure": EventBus.auto_measure
+						"label_visibility": "default" if EventBus.auto_measure else "hidden"
 					})
 		else:
 			lines.append({
@@ -127,7 +120,7 @@ func finish_line() -> void:
 				"label_angle": get_snapped_camera_angle(),
 				"label_offset_t": 0.5,
 				"label_side": 1,
-				"show_measure": EventBus.auto_measure
+				"label_visibility": "default" if EventBus.auto_measure else "hidden"
 			})
 	current_line = PackedVector2Array()
 	current_length_px = 0.0
@@ -285,10 +278,10 @@ func get_label_position(line_data: Dictionary) -> Vector2:
 		return pos + Vector2(0, -15 * side * offset_scale) # Desplazamiento simple para a pulso
 
 func _draw_length_text(line_data: Dictionary) -> void:
-	if not EventBus.show_measures: return
-	if not line_data.get("show_measure", true): return
+	var vis = line_data.get("label_visibility", "default")
+	var is_hidden = (vis == "hidden") or (vis == "default" and not EventBus.show_measures)
 	
-	if line_data.get("hide_label", false): return
+	if is_hidden: return
 	if line_data["points"].size() < 2 or default_font == null: return
 	
 	var type = line_data.get("type", "freehand")
@@ -321,7 +314,10 @@ func get_closest_line_or_label_index(pos: Vector2, label_threshold: float = 40.0
 		var line_data = lines[i]
 		
 		var allow_label_hitbox = true
-		if line_data.get("hide_label", false):
+		var vis = line_data.get("label_visibility", "default")
+		var is_hidden = (vis == "hidden") or (vis == "default" and not EventBus.show_measures)
+		
+		if is_hidden:
 			var hidden_time = line_data.get("hidden_at_time", 0.0)
 			if (Time.get_ticks_msec() / 1000.0) - hidden_time >= 3.0:
 				allow_label_hitbox = false

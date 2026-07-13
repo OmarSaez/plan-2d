@@ -62,21 +62,32 @@ func process_input(event: InputEvent) -> void:
 					canvas.get_tree().create_timer(double_click_threshold).timeout.connect(
 						func():
 							if pending_click_id == expected_id:
+								if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+									return # Es un long press / drag, no un tap, cancelar toggle
+									
 								var active_layer = canvas.get_active_layer()
 								if active_layer and idx >= 0 and idx < active_layer.lines.size():
 									var l = active_layer.lines[idx]
-									var will_hide = not l.get("hide_label", false)
-									l["hide_label"] = will_hide
+									var vis = l.get("label_visibility", "default")
+									var is_currently_hidden = (vis == "hidden") or (vis == "default" and not EventBus.show_measures)
+									
+									var will_hide = not is_currently_hidden
 									if will_hide:
+										l["label_visibility"] = "hidden"
 										l["hidden_at_time"] = Time.get_ticks_msec() / 1000.0
 										var t = active_layer.get_tree().create_timer(3.0)
 										if t: t.timeout.connect(active_layer.queue_redraw)
+									else:
+										l["label_visibility"] = "visible"
+									
 									active_layer.queue_redraw()
 									canvas.save_state()
 					)
 					
-					dragging_index = -1
+					dragging_index = idx
 					is_moving = false
+					has_dragged = false
+					last_mouse_pos = event.position
 					original_state_saved = false
 					
 				elif clicked_on_selection_bounds:
@@ -125,6 +136,33 @@ func process_input(event: InputEvent) -> void:
 				
 			has_dragged = true
 			layer.queue_redraw()
+			
+		elif dragging_index >= 0:
+			if not has_dragged and event.position.distance_to(last_mouse_pos) < 5.0:
+				return # Esperar un poco antes de considerar drag
+				
+			var pts: PackedVector2Array = layer.lines[dragging_index]["points"]
+			var type = layer.lines[dragging_index].get("type", "freehand")
+			
+			if (type == "straight" or pts.size() == 2) and pts.size() >= 2:
+				if not has_dragged:
+					pending_click_id += 1 # Cancelar el tap si empezamos a arrastrar antes de que expire
+				has_dragged = true
+				
+				var p1 = pts[0]
+				var p2 = pts[-1]
+				var dir = (p2 - p1).normalized()
+				var proj_dist = (event.position - p1).dot(dir)
+				var t = clamp(proj_dist / p1.distance_to(p2), 0.0, 1.0)
+				
+				var normal = Vector2(-dir.y, dir.x)
+				if normal.y > 0 or (normal.y == 0 and normal.x > 0):
+					normal = -normal
+					
+				var to_mouse = event.position - (p1 + dir * proj_dist)
+				var side = 1 if normal.dot(to_mouse) > 0 else -1
+				
+				layer.update_line_label(dragging_index, t, side)
 
 func cancel_action() -> void:
 	var layer = canvas.get_active_layer()
