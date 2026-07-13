@@ -231,9 +231,19 @@ func _setup_archivo_buttons() -> void:
 		row1.add_child(btn_home)
 		
 		var btn_page_plus = _create_action_button("res://assets/icons/file-plus.svg")
+		btn_page_plus.pressed.connect(func():
+			var canvas = get_tree().current_scene.get_node("Workspace/CanvasManager")
+			if canvas:
+				canvas.add_paper()
+		)
 		row1.add_child(btn_page_plus)
 		
 		var btn_page_minus = _create_action_button("res://assets/icons/file-minus.svg")
+		btn_page_minus.pressed.connect(func():
+			var canvas = get_tree().current_scene.get_node("Workspace/CanvasManager")
+			if canvas:
+				canvas.remove_paper()
+		)
 		row1.add_child(btn_page_minus)
 		
 		var btn_img = _create_action_button("res://assets/icons/image.svg")

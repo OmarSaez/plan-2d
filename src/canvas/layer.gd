@@ -218,7 +218,9 @@ func _draw() -> void:
 		draw_polyline(lasso_polygon, Color(0.2, 0.5, 1.0, 0.8), 2.0 * offset_scale, false)
 		if lasso_polygon.size() >= 3:
 			draw_line(lasso_polygon[-1], lasso_polygon[0], Color(0.2, 0.5, 1.0, 0.4), 2.0 * offset_scale)
-			draw_colored_polygon(lasso_polygon, Color(0.2, 0.5, 1.0, 0.1))
+			var indices = Geometry2D.triangulate_polygon(lasso_polygon)
+			if not indices.is_empty():
+				draw_colored_polygon(lasso_polygon, Color(0.2, 0.5, 1.0, 0.1))
 		
 	if show_eraser_cursor:
 		if eraser_mode == "area":
