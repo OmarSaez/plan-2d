@@ -38,6 +38,10 @@ extends Control
 @onready var unit_option: OptionButton = $SettingsWidget/Margin/VBox/Content/VBoxLang/UnitOption
 @onready var vbox_lang: VBoxContainer = $SettingsWidget/Margin/VBox/Content/VBoxLang
 
+var selection_wrapper: Control
+var duplicate_btn: Button
+var last_has_selection: bool = false
+
 var is_collapsed: bool = false
 var base_content_height: float = 0.0
 var paper_rect: Rect2
@@ -98,6 +102,7 @@ func _ready() -> void:
 	_setup_color_options()
 	_setup_auto_measure_btn()
 	_setup_archivo_buttons()
+	_setup_duplicate_btn()
 	_setup_tool_toast()
 	
 	var layer_panel = load("res://src/ui/layer_panel.gd").new()
@@ -310,7 +315,6 @@ func _animate_save_button(btn: Button) -> void:
 	
 	tw.tween_interval(1.5)
 	tw.tween_callback(func():
-		var fade_tw = create_tween()
 		btn.icon = original_icon
 		btn.add_theme_stylebox_override("normal", original_style)
 		var sb_hover = original_style.duplicate()
@@ -409,6 +413,99 @@ func _wrap_button_for_rotation(btn: Button) -> void:
 	parent.move_child(wrapper, idx)
 	wrapper.add_child(btn)
 	btn.position = Vector2.ZERO
+
+func _setup_duplicate_btn() -> void:
+	selection_wrapper = Control.new()
+	selection_wrapper.clip_contents = true
+	selection_wrapper.custom_minimum_size.x = 196
+	selection_wrapper.hide()
+	
+	duplicate_btn = Button.new()
+	duplicate_btn.text = "UI_DUPLICATE"
+	duplicate_btn.custom_minimum_size = Vector2(196, 40)
+	duplicate_btn.size = Vector2(196, 40)
+	duplicate_btn.position = Vector2(0, 6)
+	
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color(0.15, 0.17, 0.22)
+	sb.corner_radius_top_left = 12
+	sb.corner_radius_top_right = 12
+	sb.corner_radius_bottom_left = 12
+	sb.corner_radius_bottom_right = 12
+	duplicate_btn.add_theme_stylebox_override("normal", sb)
+	
+	var sb_hover = sb.duplicate()
+	sb_hover.bg_color = Color(0.25, 0.28, 0.35)
+	duplicate_btn.add_theme_stylebox_override("hover", sb_hover)
+	duplicate_btn.add_theme_stylebox_override("pressed", sb_hover)
+	
+	duplicate_btn.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
+	duplicate_btn.add_theme_font_size_override("font_size", 14)
+	
+	selection_wrapper.add_child(duplicate_btn)
+	
+	var vbox_tools = $Sidebar/Margin/VBox/ContentWrapper/VBoxTools
+	vbox_tools.add_child(selection_wrapper)
+	vbox_tools.move_child(selection_wrapper, 2)
+	
+	duplicate_btn.pressed.connect(_on_duplicate_pressed)
+
+func _process(delta: float) -> void:
+	var has_sel = false
+	var canvas = get_tree().current_scene.get_node_or_null("Workspace/CanvasManager")
+	if canvas:
+		var layer = canvas.get_active_layer()
+		if layer and layer.selected_indices.size() > 0:
+			has_sel = true
+			
+	if has_sel != last_has_selection:
+		last_has_selection = has_sel
+		_on_selection_changed(has_sel)
+
+func _on_selection_changed(has_selection: bool) -> void:
+	var tw = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	var current_content_h = content_wrapper.custom_minimum_size.y
+	var current_side_h = sidebar.size.y
+	
+	if has_selection:
+		selection_wrapper.show()
+		selection_wrapper.custom_minimum_size.y = 0
+		duplicate_btn.position.y = -40
+		tw.tween_property(selection_wrapper, "custom_minimum_size:y", 46, 0.3)
+		tw.parallel().tween_property(duplicate_btn, "position:y", 6, 0.3)
+		tw.parallel().tween_property(content_wrapper, "custom_minimum_size:y", current_content_h + 46, 0.3)
+		tw.parallel().tween_property(sidebar, "size:y", current_side_h + 46, 0.3)
+	else:
+		tw.tween_property(selection_wrapper, "custom_minimum_size:y", 0, 0.3)
+		tw.parallel().tween_property(duplicate_btn, "position:y", -40, 0.3)
+		tw.parallel().tween_property(content_wrapper, "custom_minimum_size:y", current_content_h - 46, 0.3)
+		tw.parallel().tween_property(sidebar, "size:y", current_side_h - 46, 0.3)
+		tw.tween_callback(func(): selection_wrapper.hide())
+
+func _on_duplicate_pressed() -> void:
+	var canvas = get_tree().current_scene.get_node_or_null("Workspace/CanvasManager")
+	if not canvas: return
+	var layer = canvas.get_active_layer()
+	if not layer or layer.selected_indices.is_empty(): return
+	
+	var new_indices = []
+	var offset = Vector2(20, 20)
+	
+	var indices_to_copy = layer.selected_indices.duplicate()
+	for idx in indices_to_copy:
+		var original_line = layer.lines[idx]
+		var cloned_line = original_line.duplicate(true)
+		var pts: PackedVector2Array = cloned_line["points"].duplicate()
+		for i in range(pts.size()):
+			pts[i] += offset
+		cloned_line["points"] = pts
+		layer.lines.append(cloned_line)
+		new_indices.append(layer.lines.size() - 1)
+		
+	layer.selected_indices.clear()
+	layer.selected_indices.append_array(new_indices)
+	layer.queue_redraw()
+	canvas.save_state()
 
 func _on_global_tool_selected(tool_id: String) -> void:
 	pen_btn.set_active(tool_id == "pen")
@@ -512,6 +609,8 @@ func _animate_dim_panel(show: bool) -> void:
 			dim_h = 120
 	
 	var base_h = collapsed_content_h if is_collapsed else base_content_height
+	if selection_wrapper and selection_wrapper.visible:
+		base_h += 46
 	var side_base_h = 96 + base_h
 	
 	if show:
@@ -574,6 +673,8 @@ func _on_collapse_pressed() -> void:
 		if dim_panel.visible:
 			dim_h = 230
 			target_h += dim_h + 16
+		if selection_wrapper and selection_wrapper.visible:
+			target_h += 46
 			
 		tw.tween_property(dim_vbox, "size:x", 152, 0.4)
 		tw.tween_property(dim_panel, "custom_minimum_size:y", dim_h, 0.4)
@@ -593,6 +694,8 @@ func _on_collapse_pressed() -> void:
 		if dim_panel.visible:
 			dim_h = 120
 			target_h += dim_h + 16
+		if selection_wrapper and selection_wrapper.visible:
+			target_h += 46
 		
 		tw.tween_property(dim_vbox, "size:x", 196, 0.4)
 		tw.tween_property(dim_panel, "custom_minimum_size:y", dim_h, 0.4)
@@ -678,6 +781,16 @@ func _setup_auto_measure_btn() -> void:
 	auto_measure_btn.pressed.connect(func():
 		EventBus.auto_measure = !EventBus.auto_measure
 		_update_auto_measure_btn_style()
+		
+		var canvas = get_tree().current_scene.get_node_or_null("Workspace/CanvasManager")
+		if canvas:
+			var active_layer = canvas.get_active_layer()
+			if active_layer and active_layer.selected_indices.size() > 0:
+				var vis_str = "visible" if EventBus.auto_measure else "hidden"
+				for idx in active_layer.selected_indices:
+					active_layer.lines[idx]["label_visibility"] = vis_str
+				active_layer.queue_redraw()
+				canvas.save_state()
 	)
 	
 	tools_grid.add_child(auto_measure_btn)
@@ -848,6 +961,15 @@ func _on_color_selected(btn: Button, c: Color) -> void:
 	new_sb.shadow_size = 4
 	
 	EventBus.set_color(c)
+	
+	var canvas = get_tree().current_scene.get_node_or_null("Workspace/CanvasManager")
+	if canvas:
+		var active_layer = canvas.get_active_layer()
+		if active_layer and active_layer.selected_indices.size() > 0:
+			for idx in active_layer.selected_indices:
+				active_layer.lines[idx]["color"] = c
+			active_layer.queue_redraw()
+			canvas.save_state()
 
 func _on_settings_pressed() -> void:
 	is_settings_open = !is_settings_open
