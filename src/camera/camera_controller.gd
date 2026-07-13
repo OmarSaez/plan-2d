@@ -86,7 +86,7 @@ func _process_gesture() -> void:
 		var new_zoom = clamp(start_zoom.x * (current_distance / start_distance), zoom_min, zoom_max)
 		zoom = Vector2(new_zoom, new_zoom)
 		
-	rotation = start_rot + (current_angle - start_angle)
+	rotation = start_rot - (current_angle - start_angle)
 	
 	force_update_scroll()
 	

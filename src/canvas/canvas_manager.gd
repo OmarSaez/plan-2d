@@ -255,6 +255,40 @@ func get_current_state() -> Dictionary:
 		"layers": state_layers
 	}
 
+func export_for_print() -> void:
+	var vp = SubViewport.new()
+	vp.size = paper_rect.size
+	vp.render_target_update_mode = SubViewport.UPDATE_ONCE
+	vp.transparent_bg = false
+	add_child(vp)
+	
+	remove_child(paper_rect)
+	vp.add_child(paper_rect)
+	paper_rect.position = Vector2.ZERO
+	
+	await get_tree().process_frame
+	await get_tree().process_frame
+	
+	var img = vp.get_texture().get_image()
+	
+	vp.remove_child(paper_rect)
+	add_child(paper_rect)
+	move_child(paper_rect, 0)
+	paper_rect.position = -paper_rect.size / 2.0
+	vp.queue_free()
+	
+	var path = "user://print_temp.png"
+	img.save_png(path)
+	
+	if OS.get_name() == "Android":
+		if Engine.has_singleton("PrintPlugin"):
+			var plugin = Engine.get_singleton("PrintPlugin")
+			plugin.printImage(ProjectSettings.globalize_path(path))
+		else:
+			print("PrintPlugin not found!")
+	else:
+		print("Impresión solo disponible en Android. Imagen guardada en: ", ProjectSettings.globalize_path(path))
+
 func restore_state(state: Dictionary) -> void:
 	is_restoring = true
 	

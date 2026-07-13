@@ -236,6 +236,11 @@ func _setup_archivo_buttons() -> void:
 		row2.add_child(btn_pdf)
 		
 		var btn_print = _create_action_button("res://assets/icons/printer.svg")
+		btn_print.pressed.connect(func():
+			var canvas = get_tree().current_scene.get_node("Workspace/CanvasManager")
+			if canvas:
+				canvas.export_for_print()
+		)
 		row2.add_child(btn_print)
 
 func _create_action_button(icon_path: String) -> Button:

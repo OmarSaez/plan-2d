@@ -227,3 +227,8 @@ func load_project(id: String) -> Dictionary:
 			if data is Dictionary:
 				return data
 	return {}
+
+func delete_project(id: String) -> void:
+	var path = "user://projects/" + id + ".res"
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(path)
