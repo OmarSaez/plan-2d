@@ -14,6 +14,11 @@ UI_ERASER_MODE,Eraser Mode,Modo Borrador,Modo Borracha
 MODE_AREA,By Area,Por Área,Por Área
 MODE_STROKE,By Stroke,Por Trazos,Por Traços
 UI_TOOL_LABEL,Selector,Selector,Seletor
+UI_TOOL_PEN,Pen,Lápiz,Lápis
+UI_TOOL_RULER,Ruler,Regla,Régua
+UI_TOOL_RECTANGLE,Rectangle,Rectángulo,Retângulo
+UI_TOOL_PERFECT,Perfect Shape,Figura Perfecta,Figura Perfeita
+UI_TOOL_ERASER,Eraser,Borrador,Borracha
 UI_MEASUREMENT_UNIT,Measurement Unit,Unidad de Medida,Unidade de Medida
 UNIT_MM,Millimeters (mm),Milímetros (mm),Milímetros (mm)
 UNIT_CM,Centimeters (cm),Centímetros (cm),Centímetros (cm)

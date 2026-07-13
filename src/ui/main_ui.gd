@@ -40,6 +40,12 @@ extends Control
 
 var is_collapsed: bool = false
 var base_content_height: float = 0.0
+var paper_rect: Rect2
+var zoom_factor: float = 1.0
+
+var tool_toast_panel: PanelContainer
+var tool_toast_label: Label
+var tool_toast_tween: Tween
 var is_settings_open: bool = false
 
 func _ready() -> void:
@@ -92,6 +98,7 @@ func _ready() -> void:
 	_setup_color_options()
 	_setup_auto_measure_btn()
 	_setup_archivo_buttons()
+	_setup_tool_toast()
 	
 	var layer_panel = load("res://src/ui/layer_panel.gd").new()
 	layer_panel.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
@@ -401,6 +408,18 @@ func _on_global_tool_selected(tool_id: String) -> void:
 	label_btn.set_active(tool_id == "label")
 	eraser_btn.set_active(tool_id == "eraser")
 	
+	var tool_names = {
+		"pen": "UI_TOOL_PEN",
+		"ruler": "UI_TOOL_RULER",
+		"rectangle": "UI_TOOL_RECTANGLE",
+		"perfect": "UI_TOOL_PERFECT",
+		"label": "UI_TOOL_LABEL",
+		"eraser": "UI_TOOL_ERASER"
+	}
+	var t_key = tool_names.get(tool_id, "")
+	if t_key != "":
+		show_tool_toast(tr(t_key))
+	
 	if tool_id != "perfect":
 		_animate_dim_panel(false)
 
@@ -422,6 +441,50 @@ func _on_label_pressed() -> void:
 
 func _on_eraser_pressed() -> void:
 	EventBus.tool_selected.emit("eraser")
+
+func _setup_tool_toast() -> void:
+	tool_toast_panel = PanelContainer.new()
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color(0.95, 0.95, 0.95, 0.9)
+	sb.corner_radius_top_left = 20
+	sb.corner_radius_top_right = 20
+	sb.corner_radius_bottom_left = 20
+	sb.corner_radius_bottom_right = 20
+	sb.content_margin_left = 24
+	sb.content_margin_right = 24
+	sb.content_margin_top = 12
+	sb.content_margin_bottom = 12
+	tool_toast_panel.add_theme_stylebox_override("panel", sb)
+	
+	tool_toast_label = Label.new()
+	tool_toast_label.add_theme_color_override("font_color", Color(0.1, 0.1, 0.1))
+	tool_toast_label.add_theme_font_size_override("font_size", 16)
+	tool_toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	
+	tool_toast_panel.add_child(tool_toast_label)
+	
+	tool_toast_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	tool_toast_panel.position.y -= 100 # Un poco arriba del centro
+	
+	tool_toast_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tool_toast_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	
+	tool_toast_panel.modulate.a = 0
+	add_child(tool_toast_panel)
+
+func show_tool_toast(text: String) -> void:
+	if not tool_toast_panel: return
+	tool_toast_label.text = text
+	
+	move_child(tool_toast_panel, get_child_count() - 1)
+	
+	if tool_toast_tween:
+		tool_toast_tween.kill()
+		
+	tool_toast_tween = create_tween()
+	tool_toast_tween.tween_property(tool_toast_panel, "modulate:a", 1.0, 0.15)
+	tool_toast_tween.tween_interval(1.0)
+	tool_toast_tween.tween_property(tool_toast_panel, "modulate:a", 0.0, 0.3)
 
 func _animate_dim_panel(show: bool) -> void:
 	var tw = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
