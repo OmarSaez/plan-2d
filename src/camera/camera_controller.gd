@@ -88,9 +88,14 @@ func _start_gesture() -> void:
 	
 	gesture_world_point = get_canvas_transform().affine_inverse() * midpoint
 	
+	# Determinar cuál fue el primer dedo en tocar (índice menor)
+	keys.sort()
+	var first_finger_screen = touches[keys[0]]
+	var first_finger_world = get_canvas_transform().affine_inverse() * first_finger_screen
+	
 	is_gesture_handled_by_tool = false
 	var tm = get_tree().current_scene.get_node_or_null("ToolManager")
-	if tm and tm.handle_rotation_start(gesture_world_point):
+	if tm and tm.handle_rotation_start(first_finger_world):
 		is_gesture_handled_by_tool = true
 		return
 
@@ -106,8 +111,8 @@ func _process_gesture() -> void:
 	if is_gesture_handled_by_tool:
 		var tm = get_tree().current_scene.get_node_or_null("ToolManager")
 		if tm:
-			# Pasamos el incremento de ángulo respecto al inicio
-			tm.handle_rotation_process(-(current_angle - start_angle))
+			# Pasamos el incremento de ángulo respecto al inicio (en positivo para seguir a los dedos)
+			tm.handle_rotation_process(current_angle - start_angle)
 		return
 	
 	if start_distance > 0:
