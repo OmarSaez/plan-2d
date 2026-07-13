@@ -249,7 +249,17 @@ func _create_card_button(icon_text: String, title: String, subtitle: String, pro
 func _on_mini_canvas_draw(rect: ColorRect, p: Dictionary) -> void:
 	var state = p.get("state", {})
 	var config = p.get("config", {})
-	if not state.has("layers"): return
+	var layers_to_draw = []
+	var g_layers = state.get("global_layers", [])
+	var is_multi = false
+	
+	if state.has("papers") and state["papers"].size() > 0:
+		layers_to_draw = state["papers"][0]
+		is_multi = true
+	elif state.has("layers"):
+		layers_to_draw = state["layers"]
+	else:
+		return
 	
 	var p_size: Vector2 = config.get("paper_size", Vector2(816, 1056))
 	var c_scale: float = config.get("canvas_scale", 1.0)
@@ -263,8 +273,14 @@ func _on_mini_canvas_draw(rect: ColorRect, p: Dictionary) -> void:
 	
 	rect.draw_rect(Rect2(Vector2.ZERO, final_size), Color.WHITE)
 	
-	for layer in state["layers"]:
-		if not layer.get("visible", true): continue
+	for i in range(layers_to_draw.size()):
+		var layer = layers_to_draw[i]
+		
+		if is_multi and i < g_layers.size():
+			if not g_layers[i].get("visible", true): continue
+		elif not is_multi:
+			if not layer.get("visible", true): continue
+			
 		for line in layer["lines"]:
 			var pts = line.get("points", PackedVector2Array())
 			if pts.size() < 2: continue

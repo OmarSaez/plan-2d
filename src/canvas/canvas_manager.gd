@@ -40,7 +40,7 @@ func _ready() -> void:
 	EventBus.manual_save_requested.connect(_on_manual_save_requested)
 
 	var loaded = EventBus.get_meta("loaded_state", {})
-	if loaded and loaded.has("layers"):
+	if loaded and (loaded.has("layers") or loaded.has("papers")):
 		restore_state(loaded)
 		EventBus.set_meta("loaded_state", {})
 	else:

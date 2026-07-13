@@ -207,7 +207,7 @@ func _draw() -> void:
 		var pts: PackedVector2Array = line_data["points"]
 		if pts.size() > 1:
 			if i in selected_indices:
-				draw_polyline(pts, Color(0.15, 0.6, 1.0, 0.85), line_width + 14.0, true)
+				draw_polyline(pts, Color(0.15, 0.6, 1.0, 0.85), line_width * 3.0, true)
 			draw_polyline(pts, line_data.get("color", Color.BLACK), line_width, true)
 			_draw_length_text(line_data)
 	
