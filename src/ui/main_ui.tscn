@@ -161,7 +161,6 @@ icon_alignment = 1
 script = ExtResource("2_xxx")
 
 [node name="ContentWrapper" type="Control" parent="Sidebar/Margin/VBox"]
-clip_contents = true
 layout_mode = 2
 
 [node name="VBoxTools" type="VBoxContainer" parent="Sidebar/Margin/VBox/ContentWrapper"]

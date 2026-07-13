@@ -80,7 +80,15 @@ func _process(delta: float) -> void:
 
 func _show_tooltip() -> void:
 	tooltip_shown = true
-	tooltip_label.text = tr(custom_tip)
+	tooltip_label.text = custom_tip
+	tooltip_label.show()
+	# Centrar arriba del botón
+	tooltip_label.position = global_position + Vector2(size.x / 2.0 - tooltip_label.size.x / 2.0, -tooltip_label.size.y - 8)
+
+func set_tooltip(text: String) -> void:
+	custom_tip = text
+	if tooltip_label:
+		tooltip_label.text = custom_tip
 	tooltip_label.show()
 	# Centrar arriba del botón
 	tooltip_label.position = global_position + Vector2(size.x / 2.0 - tooltip_label.size.x / 2.0, -tooltip_label.size.y - 8)

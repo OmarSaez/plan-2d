@@ -131,12 +131,76 @@ func _setup_archivo_buttons() -> void:
 	if archivo_old_grid:
 		archivo_old_grid.hide()
 		archivo_old_grid.queue_free()
+		var archivo_wrapper = MarginContainer.new()
+		var v_idx = archivo_lbl.get_index()
+		$Sidebar/Margin/VBox/ContentWrapper/VBoxTools.add_child(archivo_wrapper)
+		$Sidebar/Margin/VBox/ContentWrapper/VBoxTools.move_child(archivo_wrapper, v_idx + 1)
 		
+		# Capa 1: Cuadrícula original
 		var archivo_vbox = VBoxContainer.new()
 		archivo_vbox.add_theme_constant_override("separation", 8)
-		var v_idx = archivo_lbl.get_index()
-		$Sidebar/Margin/VBox/ContentWrapper/VBoxTools.add_child(archivo_vbox)
-		$Sidebar/Margin/VBox/ContentWrapper/VBoxTools.move_child(archivo_vbox, v_idx + 1)
+		archivo_wrapper.add_child(archivo_vbox)
+		
+		# Capa 2: Panel de confirmación (oculto por defecto)
+		var confirm_panel = PanelContainer.new()
+		confirm_panel.hide()
+		
+		var sb_confirm = StyleBoxFlat.new()
+		sb_confirm.bg_color = Color(0.18, 0.20, 0.24)
+		sb_confirm.corner_radius_top_left = 12
+		sb_confirm.corner_radius_top_right = 12
+		sb_confirm.corner_radius_bottom_left = 12
+		sb_confirm.corner_radius_bottom_right = 12
+		confirm_panel.add_theme_stylebox_override("panel", sb_confirm)
+		archivo_wrapper.add_child(confirm_panel)
+		
+		var confirm_vbox = VBoxContainer.new()
+		confirm_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		confirm_vbox.add_theme_constant_override("separation", 12)
+		confirm_panel.add_child(confirm_vbox)
+		
+		var lbl_q = Label.new()
+		lbl_q.text = "UI_CONFIRM_HOME"
+		lbl_q.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl_q.add_theme_font_size_override("font_size", 12)
+		confirm_vbox.add_child(lbl_q)
+		
+		var hbox_btns = HBoxContainer.new()
+		hbox_btns.alignment = BoxContainer.ALIGNMENT_CENTER
+		hbox_btns.add_theme_constant_override("separation", 12)
+		confirm_vbox.add_child(hbox_btns)
+		
+		var btn_cancel = Button.new()
+		btn_cancel.text = "UI_CANCEL"
+		var sb_c = StyleBoxFlat.new()
+		sb_c.bg_color = Color("#3f3f46")
+		sb_c.corner_radius_top_left = 8
+		sb_c.corner_radius_top_right = 8
+		sb_c.corner_radius_bottom_left = 8
+		sb_c.corner_radius_bottom_right = 8
+		sb_c.content_margin_left = 12
+		sb_c.content_margin_right = 12
+		sb_c.content_margin_top = 4
+		sb_c.content_margin_bottom = 4
+		btn_cancel.add_theme_stylebox_override("normal", sb_c)
+		btn_cancel.add_theme_stylebox_override("hover", sb_c.duplicate())
+		hbox_btns.add_child(btn_cancel)
+		
+		var btn_accept = Button.new()
+		btn_accept.text = "UI_ACCEPT"
+		var sb_a = StyleBoxFlat.new()
+		sb_a.bg_color = Color("#10b981") # Verde
+		sb_a.corner_radius_top_left = 8
+		sb_a.corner_radius_top_right = 8
+		sb_a.corner_radius_bottom_left = 8
+		sb_a.corner_radius_bottom_right = 8
+		sb_a.content_margin_left = 12
+		sb_a.content_margin_right = 12
+		sb_a.content_margin_top = 4
+		sb_a.content_margin_bottom = 4
+		btn_accept.add_theme_stylebox_override("normal", sb_a)
+		btn_accept.add_theme_stylebox_override("hover", sb_a.duplicate())
+		hbox_btns.add_child(btn_accept)
 		
 		var row1 = HBoxContainer.new()
 		row1.add_theme_constant_override("separation", 12)
@@ -147,13 +211,15 @@ func _setup_archivo_buttons() -> void:
 		archivo_vbox.add_child(row2)
 		
 		var btn_save = _create_action_button("res://assets/icons/save.svg")
-		btn_save.pressed.connect(func(): EventBus.manual_save_requested.emit())
+		btn_save.pressed.connect(func():
+			EventBus.manual_save_requested.emit()
+			_animate_save_button(btn_save)
+		)
 		row1.add_child(btn_save)
 		
 		var btn_home = _create_action_button("res://assets/icons/home.svg")
 		btn_home.pressed.connect(func():
-			EventBus.manual_save_requested.emit()
-			get_tree().change_scene_to_file("res://src/ui/project_selector.tscn")
+			_animate_home_confirm(btn_home, archivo_vbox, confirm_panel, btn_cancel, btn_accept)
 		)
 		row1.add_child(btn_home)
 		
@@ -196,6 +262,120 @@ func _create_action_button(icon_path: String) -> Button:
 	btn.add_theme_stylebox_override("focus", sb)
 	
 	return btn
+
+func _animate_save_button(btn: Button) -> void:
+	if btn.get_meta("is_animating", false): return
+	btn.set_meta("is_animating", true)
+	btn.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	
+	var original_icon = load("res://assets/icons/save.svg")
+	var check_icon = load("res://assets/icons/check.svg")
+	var original_style = btn.get_theme_stylebox("normal").duplicate()
+	
+	var success_style = original_style.duplicate()
+	success_style.bg_color = Color("#34c759") # Verde vibrante
+	
+	btn.add_theme_stylebox_override("normal", success_style)
+	btn.add_theme_stylebox_override("hover", success_style)
+	btn.icon = check_icon
+	
+	var tw = create_tween()
+	tw.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	
+	btn.pivot_offset = btn.size / 2.0
+	tw.tween_property(btn, "scale", Vector2(1.15, 1.15), 0.15)
+	tw.tween_property(btn, "scale", Vector2(1.0, 1.0), 0.15)
+	
+	tw.tween_interval(1.5)
+	tw.tween_callback(func():
+		var fade_tw = create_tween()
+		btn.icon = original_icon
+		btn.add_theme_stylebox_override("normal", original_style)
+		var sb_hover = original_style.duplicate()
+		sb_hover.bg_color = Color(0.25, 0.28, 0.35)
+		btn.add_theme_stylebox_override("hover", sb_hover)
+		
+		btn.set_meta("is_animating", false)
+		btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	)
+
+func _animate_home_confirm(btn_home: Button, archivo_vbox: Control, confirm_panel: Control, btn_cancel: Button, btn_accept: Button) -> void:
+	if btn_home.get_meta("is_animating", false): return
+	btn_home.set_meta("is_animating", true)
+	
+	var tw_fade = create_tween()
+	tw_fade.tween_property(archivo_vbox, "modulate:a", 0.0, 0.15)
+	tw_fade.tween_callback(func(): archivo_vbox.hide())
+	
+	var clone = Panel.new()
+	var sb = btn_home.get_theme_stylebox("normal").duplicate()
+	clone.add_theme_stylebox_override("panel", sb)
+	
+	clone.top_level = true
+	clone.global_position = btn_home.global_position
+	clone.size = btn_home.size
+	archivo_vbox.get_parent().add_child(clone)
+	
+	archivo_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	confirm_panel.custom_minimum_size = archivo_vbox.size
+	
+	var tw = create_tween()
+	tw.set_parallel(true)
+	tw.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	
+	tw.tween_property(clone, "global_position", archivo_vbox.global_position, 0.4)
+	tw.tween_property(clone, "size", archivo_vbox.size, 0.4)
+	
+	tw.chain().tween_callback(func():
+		confirm_panel.show()
+		clone.queue_free()
+	)
+	
+	for c in btn_cancel.pressed.get_connections():
+		btn_cancel.pressed.disconnect(c.callable)
+	for c in btn_accept.pressed.get_connections():
+		btn_accept.pressed.disconnect(c.callable)
+		
+	btn_cancel.pressed.connect(func():
+		_cancel_home_confirm(btn_home, archivo_vbox, confirm_panel)
+	)
+	
+	btn_accept.pressed.connect(func():
+		EventBus.manual_save_requested.emit()
+		get_tree().change_scene_to_file("res://src/ui/project_selector.tscn")
+	)
+
+func _cancel_home_confirm(btn_home: Button, archivo_vbox: Control, confirm_panel: Control) -> void:
+	confirm_panel.hide()
+	
+	var clone = Panel.new()
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color(0.18, 0.20, 0.24)
+	sb.corner_radius_top_left = 12
+	sb.corner_radius_top_right = 12
+	sb.corner_radius_bottom_left = 12
+	sb.corner_radius_bottom_right = 12
+	clone.add_theme_stylebox_override("panel", sb)
+	
+	clone.top_level = true
+	clone.global_position = archivo_vbox.global_position
+	clone.size = archivo_vbox.size
+	archivo_vbox.get_parent().add_child(clone)
+	
+	var tw = create_tween()
+	tw.set_parallel(true)
+	tw.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN_OUT)
+	
+	tw.tween_property(clone, "global_position", btn_home.global_position, 0.4)
+	tw.tween_property(clone, "size", btn_home.size, 0.4)
+	
+	tw.chain().tween_callback(func():
+		clone.queue_free()
+		archivo_vbox.show()
+		var tw2 = create_tween()
+		tw2.tween_property(archivo_vbox, "modulate:a", 1.0, 0.15)
+		btn_home.set_meta("is_animating", false)
+	)
 
 func _wrap_button_for_rotation(btn: Button) -> void:
 	var parent = btn.get_parent()
@@ -412,7 +592,7 @@ var auto_measure_btn: Button
 func _setup_auto_measure_btn() -> void:
 	auto_measure_btn = Button.new()
 	auto_measure_btn.custom_minimum_size = Vector2(92, 40)
-	auto_measure_btn.text = "Medidas"
+	auto_measure_btn.text = "UI_MEASUREMENTS"
 	auto_measure_btn.add_theme_font_size_override("font_size", 12)
 	
 	_update_auto_measure_btn_style()
@@ -457,17 +637,17 @@ var autosave_option: OptionButton
 
 func _setup_autosave_options() -> void:
 	var lbl = Label.new()
-	lbl.text = tr("UI_AUTOSAVE")
+	lbl.text = "UI_AUTOSAVE"
 	lbl.add_theme_font_size_override("font_size", 10)
 	lbl.add_theme_color_override("font_color", Color(0.6, 0.65, 0.7))
 	vbox_lang.add_child(lbl)
 	
 	autosave_option = OptionButton.new()
-	autosave_option.add_item(tr("AUTOSAVE_OFF"), 0)
-	autosave_option.add_item(tr("AUTOSAVE_3M"), 3)
-	autosave_option.add_item(tr("AUTOSAVE_5M"), 5)
-	autosave_option.add_item(tr("AUTOSAVE_10M"), 10)
-	autosave_option.add_item(tr("AUTOSAVE_20M"), 20)
+	autosave_option.add_item("AUTOSAVE_OFF", 0)
+	autosave_option.add_item("AUTOSAVE_3M", 3)
+	autosave_option.add_item("AUTOSAVE_5M", 5)
+	autosave_option.add_item("AUTOSAVE_10M", 10)
+	autosave_option.add_item("AUTOSAVE_20M", 20)
 	
 	var intervals = [0, 3, 5, 10, 20]
 	var current_idx = intervals.find(EventBus.current_autosave_interval)

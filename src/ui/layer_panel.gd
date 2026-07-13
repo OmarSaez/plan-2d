@@ -153,7 +153,7 @@ func _build_confirm_dialog() -> void:
 	confirm_wrapper.add_child(confirm_dialog_vbox)
 	
 	var lbl = Label.new()
-	lbl.text = "¿Eliminar capa y sus trazos?"
+	lbl.text = "UI_CONFIRM_DELETE_LAYER"
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
 	confirm_dialog_vbox.add_child(lbl)
@@ -165,10 +165,10 @@ func _build_confirm_dialog() -> void:
 	
 	var btn_sb = StyleBoxFlat.new()
 	btn_sb.bg_color = Color(0.18, 0.20, 0.24)
-	btn_sb.corner_radius_top_left = 16
-	btn_sb.corner_radius_top_right = 16
-	btn_sb.corner_radius_bottom_left = 16
-	btn_sb.corner_radius_bottom_right = 16
+	btn_sb.corner_radius_top_left = 8
+	btn_sb.corner_radius_top_right = 8
+	btn_sb.corner_radius_bottom_left = 8
+	btn_sb.corner_radius_bottom_right = 8
 	btn_sb.content_margin_left = 16
 	btn_sb.content_margin_right = 16
 	btn_sb.content_margin_top = 8
@@ -178,7 +178,7 @@ func _build_confirm_dialog() -> void:
 	btn_sb_hover.bg_color = Color(0.25, 0.28, 0.33)
 	
 	var btn_yes = Button.new()
-	btn_yes.text = "Eliminar"
+	btn_yes.text = "UI_DELETE"
 	btn_yes.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
 	btn_yes.add_theme_stylebox_override("normal", btn_sb)
 	btn_yes.add_theme_stylebox_override("hover", btn_sb_hover)
@@ -190,7 +190,7 @@ func _build_confirm_dialog() -> void:
 	hbox.add_child(btn_yes)
 	
 	var btn_no = Button.new()
-	btn_no.text = "Cancelar"
+	btn_no.text = "UI_CANCEL"
 	btn_no.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 	btn_no.add_theme_stylebox_override("normal", btn_sb)
 	btn_no.add_theme_stylebox_override("hover", btn_sb_hover)

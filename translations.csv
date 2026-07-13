@@ -42,3 +42,8 @@ AUTOSAVE_3M,Every 3 minutes,Cada 3 minutos,A cada 3 minutos
 AUTOSAVE_5M,Every 5 minutes,Cada 5 minutos,A cada 5 minutos
 AUTOSAVE_10M,Every 10 minutes,Cada 10 minutos,A cada 10 minutos
 AUTOSAVE_20M,Every 20 minutes,Cada 20 minutos,A cada 20 minutos
+UI_CONFIRM_HOME,Do you want to return to Home?,¿Quieres volver al inicio?,Deseja voltar ao início?
+UI_ACCEPT,Accept,Aceptar,Aceitar
+UI_CONFIRM_DELETE_LAYER,Delete layer and its strokes?,¿Eliminar capa y sus trazos?,Excluir camada e seus traços?
+UI_DELETE,Delete,Eliminar,Excluir
+UI_MEASUREMENTS,Measurements,Medidas,Medidas
