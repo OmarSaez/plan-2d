@@ -119,16 +119,19 @@ func _create_card_button(icon_text: String, title: String, subtitle: String, pro
 	var vbox = VBoxContainer.new()
 	vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	btn.add_child(vbox)
 	
 	var icon_container = CenterContainer.new()
 	icon_container.custom_minimum_size = Vector2(160, 160)
+	icon_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(icon_container)
 	
 	var icon_bg = ColorRect.new()
 	icon_bg.custom_minimum_size = Vector2(120, 150)
 	icon_bg.color = Color("#e5e7eb") if icon_text == "" else Color("#1e1f26")
 	icon_bg.clip_contents = true
+	icon_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon_container.add_child(icon_bg)
 	
 	if icon_text == "+":
