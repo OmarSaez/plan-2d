@@ -1,18 +1,18 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene format=3 uid="uid://cwrj7svw2jcdl"]
 
-[ext_resource type="Script" path="res://src/main.gd" id="1_qwe12"]
-[ext_resource type="Script" path="res://src/canvas/canvas_manager.gd" id="2_asd34"]
-[ext_resource type="Script" path="res://src/tools/tool_manager.gd" id="3_zxc56"]
-[ext_resource type="PackedScene" path="res://src/ui/main_ui.tscn" id="4_ui123"]
-[ext_resource type="Script" path="res://src/camera/camera_controller.gd" id="5_cam"]
+[ext_resource type="Script" uid="uid://c6gnmkd07am4" path="res://src/main.gd" id="1_qwe12"]
+[ext_resource type="Script" uid="uid://ilj1klt25kl0" path="res://src/canvas/canvas_manager.gd" id="2_asd34"]
+[ext_resource type="Script" uid="uid://hjpgp8f0uwkp" path="res://src/tools/tool_manager.gd" id="3_zxc56"]
+[ext_resource type="PackedScene" uid="uid://cy8xxxgx" path="res://src/ui/main_ui.tscn" id="4_ui123"]
+[ext_resource type="Script" uid="uid://q7cl7o36f4a1" path="res://src/camera/camera_controller.gd" id="5_cam"]
 
-[node name="Main" type="Node"]
+[node name="Main" type="Node" unique_id=2102154299]
 script = ExtResource("1_qwe12")
 
-[node name="BgLayer" type="CanvasLayer" parent="."]
+[node name="BgLayer" type="CanvasLayer" parent="." unique_id=396557589]
 layer = -1
 
-[node name="BgColor" type="ColorRect" parent="BgLayer"]
+[node name="BgColor" type="ColorRect" parent="BgLayer" unique_id=1995769379]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -21,22 +21,22 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.12, 0.12, 0.14, 1)
 
-[node name="Workspace" type="Node2D" parent="."]
+[node name="Workspace" type="Node2D" parent="." unique_id=781839562]
 
-[node name="Camera2D" type="Camera2D" parent="Workspace"]
+[node name="Camera2D" type="Camera2D" parent="Workspace" unique_id=530575599]
 script = ExtResource("5_cam")
 
-[node name="CanvasManager" type="Node2D" parent="Workspace"]
+[node name="CanvasManager" type="Node2D" parent="Workspace" unique_id=686085277]
 script = ExtResource("2_asd34")
 
-[node name="ToolManager" type="Node" parent="."]
+[node name="ToolManager" type="Node" parent="." unique_id=812181149]
 script = ExtResource("3_zxc56")
 
-[node name="UILayer" type="CanvasLayer" parent="."]
+[node name="UILayer" type="CanvasLayer" parent="." unique_id=1785885221]
 
-[node name="MainUI" parent="UILayer" instance=ExtResource("4_ui123")]
+[node name="MainUI" parent="UILayer" unique_id=615632577 instance=ExtResource("4_ui123")]
 
-[node name="CameraInfo" type="Label" parent="UILayer"]
+[node name="CameraInfo" type="Label" parent="UILayer" unique_id=499034283]
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5

@@ -151,6 +151,27 @@ func toggle_layer_visibility(index: int) -> void:
 		EventBus.emit_layers_changed(_get_layers_info())
 		save_state()
 
+func reorder_layer(from_index: int, to_index: int) -> void:
+	if from_index < 0 or from_index >= layers.size() or to_index < 0 or to_index >= layers.size() or from_index == to_index:
+		return
+		
+	var layer = layers[from_index]
+	layers.remove_at(from_index)
+	layers.insert(to_index, layer)
+	
+	paper_rect.move_child(layer, to_index)
+	
+	if active_layer_index == from_index:
+		active_layer_index = to_index
+	elif active_layer_index > from_index and active_layer_index <= to_index:
+		active_layer_index -= 1
+	elif active_layer_index < from_index and active_layer_index >= to_index:
+		active_layer_index += 1
+		
+	EventBus.emit_active_layer_changed(active_layer_index)
+	EventBus.emit_layers_changed(_get_layers_info())
+	save_state()
+
 func _get_layers_info() -> Array:
 	var info = []
 	for i in range(layers.size()):

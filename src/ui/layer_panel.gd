@@ -24,6 +24,131 @@ var plus_icon = preload("res://assets/icons/plus.svg")
 var chevron_up = preload("res://assets/icons/chevron-up.svg")
 var chevron_down = preload("res://assets/icons/chevron-down.svg")
 
+var is_reordering_mode: bool = false
+var wobble_tween: Tween
+var dragging_item: PanelContainer
+var dragging_index: int = -1
+var drag_start_y: float = 0
+var touch_start_time: int = 0
+var potential_long_press_item: PanelContainer
+var potential_long_press_index: int = -1
+var touch_start_pos: Vector2
+var drag_placeholder: Control
+
+func _process(delta: float) -> void:
+	if is_reordering_mode:
+		for c in list_vbox.get_children():
+			if c is PanelContainer and c != dragging_item:
+				var ph = c.get_meta("placeholder", null)
+				if ph and is_instance_valid(ph):
+					c.global_position.y = lerp(c.global_position.y, ph.global_position.y, delta * 15.0)
+					c.global_position.x = ph.global_position.x
+					
+	if not is_reordering_mode and potential_long_press_item and touch_start_time > 0:
+		if Time.get_ticks_msec() - touch_start_time > 400:
+			var item = potential_long_press_item
+			var idx = potential_long_press_index
+			var t_pos = touch_start_pos
+			
+			dragging_index = list_vbox.get_children().find(item)
+			start_reordering_mode()
+			
+			dragging_item = item
+			drag_start_y = t_pos.y - item.global_position.y
+			item.z_index = 100
+			
+			potential_long_press_item = null
+			touch_start_time = 0
+
+func _input(event: InputEvent) -> void:
+	if is_reordering_mode and (event is InputEventMouseButton or event is InputEventScreenTouch):
+		if event.pressed:
+			var local_pos = get_local_mouse_position()
+			if not Rect2(Vector2.ZERO, size).has_point(local_pos):
+				stop_reordering_mode()
+
+func start_reordering_mode() -> void:
+	is_reordering_mode = true
+	if wobble_tween:
+		wobble_tween.kill()
+	wobble_tween = create_tween().set_loops()
+	
+	for c in list_vbox.get_children():
+		if c is PanelContainer:
+			c.pivot_offset = c.size / 2.0
+			
+			var ph = Control.new()
+			ph.custom_minimum_size = c.size
+			list_vbox.add_child(ph)
+			list_vbox.move_child(ph, c.get_index())
+			c.set_meta("placeholder", ph)
+			
+			var g_pos = c.global_position
+			c.top_level = true
+			c.global_position = g_pos
+			c.z_index = 50
+		
+	wobble_tween.tween_method(_wobble_step, -1.5, 1.5, 0.12).set_trans(Tween.TRANS_SINE)
+	wobble_tween.tween_method(_wobble_step, 1.5, -1.5, 0.12).set_trans(Tween.TRANS_SINE)
+
+func _wobble_step(val: float) -> void:
+	for c in list_vbox.get_children():
+		if c is PanelContainer and c != dragging_item:
+			c.rotation_degrees = val
+
+func stop_reordering_mode() -> void:
+	is_reordering_mode = false
+	if wobble_tween:
+		wobble_tween.kill()
+		wobble_tween = null
+	
+	if dragging_item:
+		finish_drag()
+		
+	var items = []
+	var needs_sort = false
+	for c in list_vbox.get_children():
+		if c is PanelContainer and not c.is_queued_for_deletion():
+			var ph = null
+			if c.has_meta("placeholder"):
+				ph = c.get_meta("placeholder")
+				
+			items.append({"panel": c, "ph_idx": ph.get_index() if ph else c.get_index()})
+			
+			if ph and is_instance_valid(ph) and not ph.is_queued_for_deletion():
+				ph.queue_free()
+			if c.has_meta("placeholder"):
+				c.remove_meta("placeholder")
+				
+			if c.top_level:
+				needs_sort = true
+			
+	if needs_sort:
+		items.sort_custom(func(a, b): return a.ph_idx < b.ph_idx)
+		for i in range(items.size()):
+			var p = items[i].panel
+			p.top_level = false
+			p.z_index = 0
+			p.rotation_degrees = 0
+			list_vbox.move_child(p, i)
+
+func finish_drag() -> void:
+	if dragging_item and is_instance_valid(dragging_item):
+		var ph = dragging_item.get_meta("placeholder", null)
+		if ph and is_instance_valid(ph):
+			var new_idx = 0
+			for c in list_vbox.get_children():
+				if not (c is PanelContainer):
+					if c == ph: break
+					new_idx += 1
+			
+			var canvas = get_tree().current_scene.get_node("Workspace/CanvasManager")
+			if canvas and dragging_index != new_idx:
+				canvas.reorder_layer(dragging_index, new_idx)
+				
+		dragging_item = null
+		dragging_index = -1
+
 func _ready() -> void:
 	custom_minimum_size = Vector2(300, 60)
 	
@@ -296,10 +421,71 @@ func _create_layer_item(index: int, info: Dictionary, is_active: bool) -> PanelC
 	panel.add_theme_stylebox_override("panel", style)
 	
 	panel.gui_input.connect(func(event):
-		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			var canvas = get_tree().current_scene.get_node("Workspace/CanvasManager")
-			if canvas: canvas.set_active_layer(index)
+		if event is InputEventMouseButton or event is InputEventScreenTouch:
+			if event.pressed:
+				if is_reordering_mode:
+					dragging_item = panel
+					# Calcular índice lógico actual contando solo PanelContainers previos
+					var logical_idx = 0
+					for c in list_vbox.get_children():
+						if c is PanelContainer:
+							if c == panel: break
+							logical_idx += 1
+					dragging_index = logical_idx
+					drag_start_y = event.global_position.y - panel.global_position.y
+					panel.z_index = 100
+					panel.rotation_degrees = 0
+				else:
+					touch_start_time = Time.get_ticks_msec()
+					potential_long_press_item = panel
+					potential_long_press_index = index
+					touch_start_pos = event.global_position
+			else:
+				if is_reordering_mode:
+					stop_reordering_mode()
+				else:
+					if touch_start_time > 0 and Time.get_ticks_msec() - touch_start_time < 400:
+						var canvas = get_tree().current_scene.get_node("Workspace/CanvasManager")
+						if canvas: canvas.set_active_layer(index)
+					touch_start_time = 0
+					potential_long_press_item = null
+					
+		elif event is InputEventMouseMotion or event is InputEventScreenDrag:
+			if is_reordering_mode and dragging_item == panel:
+				panel.global_position.y = event.global_position.y - drag_start_y
+				
+				var center_y = panel.global_position.y + panel.size.y / 2.0
+				var phs = []
+				for c in list_vbox.get_children():
+					if not (c is PanelContainer):
+						phs.append(c)
+						
+				var new_idx = 0
+				var drag_ph = panel.get_meta("placeholder", null)
+				if drag_ph:
+					for ph in phs:
+						if ph == drag_ph: continue
+						if center_y > ph.global_position.y + ph.size.y / 2.0:
+							new_idx += 1
+							
+					var actual_vbox_idx = 0
+					var ph_count = 0
+					for c in list_vbox.get_children():
+						if not (c is PanelContainer):
+							if ph_count == new_idx: break
+							if c != drag_ph: ph_count += 1
+						actual_vbox_idx += 1
+						
+					list_vbox.move_child(drag_ph, actual_vbox_idx)
+			
+			elif not is_reordering_mode and touch_start_time > 0:
+				if event.global_position.distance_to(touch_start_pos) > 15:
+					touch_start_time = 0
+					potential_long_press_item = null
 	)
+	
+	# Asegurar que el pivot_offset se setee para que el wobble rote desde el centro
+	panel.resized.connect(func(): panel.pivot_offset = panel.size / 2.0)
 	
 	var margin = MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 8)
