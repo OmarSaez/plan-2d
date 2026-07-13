@@ -10,6 +10,7 @@ var start_angle: float
 var start_zoom: Vector2
 var start_rot: float
 var gesture_world_point: Vector2
+var is_gesture_handled_by_tool: bool = false
 
 var zoom_min: float = 0.1
 var zoom_max: float = 5.0
@@ -28,6 +29,10 @@ func _input(event: InputEvent) -> void:
 				EventBus.emit_tool_action_cancelled()
 		else:
 			touches.erase(event.index)
+			if touches.size() == 0 and is_gesture_handled_by_tool:
+				var tm = get_tree().current_scene.get_node_or_null("ToolManager")
+				if tm: tm.handle_rotation_end()
+				is_gesture_handled_by_tool = false
 			
 	elif event is InputEventScreenDrag:
 		if touches.has(event.index):
@@ -41,6 +46,11 @@ func _input(event: InputEvent) -> void:
 		if event.pressed:
 			if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 				if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+					var tm = get_tree().current_scene.get_node_or_null("ToolManager")
+					var world_pos = get_global_mouse_position()
+					if tm and tm.handle_rotation_discrete(world_pos, -deg_to_rad(5)):
+						get_viewport().set_input_as_handled()
+						return
 					rotation_degrees -= 5
 				else:
 					_zoom_at_point(1.1, event.position)
@@ -48,6 +58,11 @@ func _input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 			elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 				if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+					var tm = get_tree().current_scene.get_node_or_null("ToolManager")
+					var world_pos = get_global_mouse_position()
+					if tm and tm.handle_rotation_discrete(world_pos, deg_to_rad(5)):
+						get_viewport().set_input_as_handled()
+						return
 					rotation_degrees += 5
 				else:
 					_zoom_at_point(1.0 / 1.1, event.position)
@@ -72,6 +87,12 @@ func _start_gesture() -> void:
 	start_rot = rotation
 	
 	gesture_world_point = get_canvas_transform().affine_inverse() * midpoint
+	
+	is_gesture_handled_by_tool = false
+	var tm = get_tree().current_scene.get_node_or_null("ToolManager")
+	if tm and tm.handle_rotation_start(gesture_world_point):
+		is_gesture_handled_by_tool = true
+		return
 
 func _process_gesture() -> void:
 	var keys = touches.keys()
@@ -81,6 +102,13 @@ func _process_gesture() -> void:
 	
 	var current_distance = p1.distance_to(p2)
 	var current_angle = p1.angle_to_point(p2)
+	
+	if is_gesture_handled_by_tool:
+		var tm = get_tree().current_scene.get_node_or_null("ToolManager")
+		if tm:
+			# Pasamos el incremento de ángulo respecto al inicio
+			tm.handle_rotation_process(-(current_angle - start_angle))
+		return
 	
 	if start_distance > 0:
 		var new_zoom = clamp(start_zoom.x * (current_distance / start_distance), zoom_min, zoom_max)

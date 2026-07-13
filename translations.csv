@@ -13,7 +13,7 @@ UI_LANGUAGE,Language,Idioma,Idioma
 UI_ERASER_MODE,Eraser Mode,Modo Borrador,Modo Borracha
 MODE_AREA,By Area,Por Área,Por Área
 MODE_STROKE,By Stroke,Por Trazos,Por Traços
-UI_TOOL_LABEL,Labeling,Etiquetado,Rotulagem
+UI_TOOL_LABEL,Selector,Selector,Seletor
 UI_MEASUREMENT_UNIT,Measurement Unit,Unidad de Medida,Unidade de Medida
 UNIT_MM,Millimeters (mm),Milímetros (mm),Milímetros (mm)
 UNIT_CM,Centimeters (cm),Centímetros (cm),Centímetros (cm)

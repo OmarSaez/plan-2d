@@ -16,6 +16,10 @@ var eraser_radius: float = 20.0
 var show_eraser_cursor: bool = false
 var eraser_mode: String = "area"
 
+var selected_indices: Array[int] = []
+var lasso_polygon: PackedVector2Array = PackedVector2Array()
+var is_drawing_lasso: bool = false
+
 signal stroke_updated(bubbles_data: Array)
 signal stroke_finished()
 
@@ -205,14 +209,23 @@ func erase_area(polygon: PackedVector2Array) -> bool:
 	return erased_something
 
 func _draw() -> void:
-	for line_data in lines:
+	for i in range(lines.size()):
+		var line_data = lines[i]
 		var pts: PackedVector2Array = line_data["points"]
 		if pts.size() > 1:
+			if i in selected_indices:
+				draw_polyline(pts, Color(0.15, 0.6, 1.0, 0.85), line_width + 14.0, true)
 			draw_polyline(pts, line_data.get("color", Color.BLACK), line_width, true)
 			_draw_length_text(line_data)
 	
 	if current_line.size() > 1:
 		draw_polyline(current_line, EventBus.current_color, line_width, true)
+		
+	if is_drawing_lasso and lasso_polygon.size() > 1:
+		draw_polyline(lasso_polygon, Color(0.2, 0.5, 1.0, 0.8), 2.0 * offset_scale, false)
+		if lasso_polygon.size() >= 3:
+			draw_line(lasso_polygon[-1], lasso_polygon[0], Color(0.2, 0.5, 1.0, 0.4), 2.0 * offset_scale)
+			draw_colored_polygon(lasso_polygon, Color(0.2, 0.5, 1.0, 0.1))
 		
 	if show_eraser_cursor:
 		if eraser_mode == "area":
@@ -274,6 +287,8 @@ func get_label_position(line_data: Dictionary) -> Vector2:
 func _draw_length_text(line_data: Dictionary) -> void:
 	if not EventBus.show_measures: return
 	if not line_data.get("show_measure", true): return
+	
+	if line_data.get("hide_label", false): return
 	if line_data["points"].size() < 2 or default_font == null: return
 	
 	var type = line_data.get("type", "freehand")
@@ -296,17 +311,37 @@ func _draw_length_text(line_data: Dictionary) -> void:
 	
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
-func get_closest_label_index(pos: Vector2, threshold: float = 30.0) -> int:
+func get_closest_line_or_label_index(pos: Vector2, label_threshold: float = 40.0, line_threshold: float = 15.0) -> int:
 	var closest_idx = -1
-	var min_dist = threshold * offset_scale
+	var label_min_dist = label_threshold * offset_scale
+	var line_min_dist = line_threshold * offset_scale
+	var current_best_dist = INF
 	
 	for i in range(lines.size()):
-		var rect_center = get_label_position(lines[i]) # Ahora es el centro geométrico real
-		var dist = rect_center.distance_to(pos)
-		if dist < min_dist:
-			min_dist = dist
-			closest_idx = i
-			
+		var line_data = lines[i]
+		
+		var allow_label_hitbox = true
+		if line_data.get("hide_label", false):
+			var hidden_time = line_data.get("hidden_at_time", 0.0)
+			if (Time.get_ticks_msec() / 1000.0) - hidden_time >= 3.0:
+				allow_label_hitbox = false
+		
+		if allow_label_hitbox:
+			var rect_center = get_label_position(line_data)
+			var dist = rect_center.distance_to(pos)
+			if dist < label_min_dist and dist < current_best_dist:
+				current_best_dist = dist
+				closest_idx = i
+				continue
+				
+		var pts: PackedVector2Array = line_data["points"]
+		for j in range(pts.size() - 1):
+			var closest = Geometry2D.get_closest_point_to_segment(pos, pts[j], pts[j+1])
+			var d = closest.distance_to(pos)
+			if d < line_min_dist and d < current_best_dist:
+				current_best_dist = d
+				closest_idx = i
+				
 	return closest_idx
 
 func update_line_label(index: int, offset_t: float, side: int) -> void:
@@ -318,7 +353,29 @@ func update_line_label(index: int, offset_t: float, side: int) -> void:
 func update_line_label_angle(index: int, angle_deg: float) -> void:
 	if index >= 0 and index < lines.size():
 		lines[index]["label_angle"] = fmod(angle_deg, 360.0)
+	queue_redraw()
+
+func finish_lasso() -> void:
+	if lasso_polygon.size() < 3:
+		lasso_polygon.clear()
+		is_drawing_lasso = false
 		queue_redraw()
+		return
+		
+	for i in range(lines.size()):
+		var pts = lines[i]["points"]
+		var all_inside = true
+		for p in pts:
+			if not Geometry2D.is_point_in_polygon(p, lasso_polygon):
+				all_inside = false
+				break
+		if all_inside:
+			if not i in selected_indices:
+				selected_indices.append(i)
+				
+	lasso_polygon.clear()
+	is_drawing_lasso = false
+	queue_redraw()
 
 func get_snapped_camera_angle() -> float:
 	var cam_rot = 0.0
