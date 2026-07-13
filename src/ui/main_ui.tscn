@@ -267,7 +267,7 @@ text = "ANCHO"
 
 [node name="WidthInput" type="LineEdit" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/HBoxContainer/VBoxWidth"]
 layout_mode = 2
-text = "100"
+text = "5"
 
 [node name="VBoxHeight" type="VBoxContainer" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/HBoxContainer"]
 layout_mode = 2
@@ -281,7 +281,7 @@ text = "ALTO"
 
 [node name="HeightInput" type="LineEdit" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel/HBoxContainer/VBoxHeight"]
 layout_mode = 2
-text = "100"
+text = "10"
 
 [node name="ButtonsHBox" type="GridContainer" parent="Sidebar/Margin/VBox/ContentWrapper/VBoxTools/DimWrapper/DimensionsPanel"]
 layout_mode = 2

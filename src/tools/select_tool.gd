@@ -34,78 +34,83 @@ func process_input(event: InputEvent) -> void:
 					if bounds.has_point(event.position):
 						clicked_on_selection_bounds = true
 						
-				# Revisar si tocamos una línea (margen 15px) o su etiqueta (margen 40px)
-				var idx = layer.get_closest_line_or_label_index(event.position, 40.0, 15.0)
-				
-				if idx != -1:
-					# Lógica de doble clic para rotar etiqueta
-					var current_time = Time.get_ticks_msec() / 1000.0
-					if idx == last_clicked_index and (current_time - double_click_timer) < double_click_threshold:
-						var line = layer.lines[idx]
-						
-						# Cancelar el tap pendiente
-						pending_click_id += 1
-						
-						var current_angle = line.get("label_angle", 0.0)
-						layer.update_line_label_angle(idx, current_angle + 90.0)
-						canvas.save_state()
-						dragging_index = -1
-						last_clicked_index = -1
-						return
-					
-					last_clicked_index = idx
-					double_click_timer = current_time
-					
-					# Programar el ocultamiento diferido para dar tiempo al doble tap
-					pending_click_id += 1
-					var expected_id = pending_click_id
-					canvas.get_tree().create_timer(double_click_threshold).timeout.connect(
-						func():
-							if pending_click_id == expected_id:
-								if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-									return # Es un long press / drag, no un tap, cancelar toggle
-									
-								var active_layer = canvas.get_active_layer()
-								if active_layer and idx >= 0 and idx < active_layer.lines.size():
-									var l = active_layer.lines[idx]
-									var vis = l.get("label_visibility", "default")
-									var is_currently_hidden = (vis == "hidden") or (vis == "default" and not EventBus.show_measures)
-									
-									var will_hide = not is_currently_hidden
-									if will_hide:
-										l["label_visibility"] = "hidden"
-										l["hidden_at_time"] = Time.get_ticks_msec() / 1000.0
-										var t = active_layer.get_tree().create_timer(3.0)
-										if t: t.timeout.connect(active_layer.queue_redraw)
-									else:
-										l["label_visibility"] = "visible"
-									
-									active_layer.queue_redraw()
-									canvas.save_state()
-					)
-					
-					dragging_index = idx
-					is_moving = false
-					has_dragged = false
-					last_mouse_pos = event.position
-					original_state_saved = false
-					
-				elif clicked_on_selection_bounds:
-					# Clic dentro del área seleccionada, mover todo
+				if clicked_on_selection_bounds:
+					# Clic dentro del área seleccionada, mover todo como bloque prioritario
 					dragging_index = -2 # Marcador para saber que arrastramos bloque
 					is_moving = true
 					has_dragged = false
+					last_mouse_pos = event.position
 					original_state_saved = false
-					
 				else:
-					# Clic en espacio vacío: empezar lazo
-					layer.selected_indices.clear()
-					layer.is_drawing_lasso = true
-					layer.lasso_polygon.clear()
-					layer.lasso_polygon.append(event.position)
-					layer.queue_redraw()
-					dragging_index = -1
-					is_moving = false
+					# Si NO tocamos la selección activa, buscar líneas libres
+					var idx = layer.get_closest_line_or_label_index(event.position, 40.0, 15.0)
+					
+					if idx != -1:
+						if layer.selected_indices.size() > 0:
+							layer.selected_indices.clear()
+							layer.queue_redraw()
+							
+						# Lógica de doble clic para rotar etiqueta
+						var current_time = Time.get_ticks_msec() / 1000.0
+						if idx == last_clicked_index and (current_time - double_click_timer) < double_click_threshold:
+							var line = layer.lines[idx]
+							
+							# Cancelar el tap pendiente
+							pending_click_id += 1
+							
+							var current_angle = line.get("label_angle", 0.0)
+							layer.update_line_label_angle(idx, current_angle + 90.0)
+							canvas.save_state()
+							dragging_index = -1
+							last_clicked_index = -1
+							return
+						
+						last_clicked_index = idx
+						double_click_timer = current_time
+						
+						# Programar el ocultamiento diferido para dar tiempo al doble tap
+						pending_click_id += 1
+						var expected_id = pending_click_id
+						canvas.get_tree().create_timer(double_click_threshold).timeout.connect(
+							func():
+								if pending_click_id == expected_id:
+									if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+										return # Es un long press / drag, no un tap, cancelar toggle
+										
+									var active_layer = canvas.get_active_layer()
+									if active_layer and idx >= 0 and idx < active_layer.lines.size():
+										var l = active_layer.lines[idx]
+										var vis = l.get("label_visibility", "default")
+										var is_currently_hidden = (vis == "hidden") or (vis == "default" and not EventBus.show_measures)
+										
+										var will_hide = not is_currently_hidden
+										if will_hide:
+											l["label_visibility"] = "hidden"
+											l["hidden_at_time"] = Time.get_ticks_msec() / 1000.0
+											var t = active_layer.get_tree().create_timer(3.0)
+											if t: t.timeout.connect(active_layer.queue_redraw)
+										else:
+											l["label_visibility"] = "visible"
+										
+										active_layer.queue_redraw()
+										canvas.save_state()
+						)
+						
+						dragging_index = idx
+						is_moving = false
+						has_dragged = false
+						last_mouse_pos = event.position
+						original_state_saved = false
+						
+					else:
+						# Clic en espacio vacío total: empezar lazo
+						layer.selected_indices.clear()
+						layer.is_drawing_lasso = true
+						layer.lasso_polygon.clear()
+						layer.lasso_polygon.append(event.position)
+						layer.queue_redraw()
+						dragging_index = -1
+						is_moving = false
 					
 			else:
 				if layer.is_drawing_lasso:
