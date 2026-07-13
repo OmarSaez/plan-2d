@@ -223,6 +223,91 @@ func reorder_layer(from_index: int, to_index: int) -> void:
 func _get_layers_info() -> Array:
 	return global_layers.duplicate(true)
 
+func transfer_elements(indices: Array) -> void:
+	if indices.is_empty(): return
+	var active_layer = get_active_layer()
+	if not active_layer: return
+	var active_paper = papers[active_paper_index]
+	
+	# Calcular la posición global (Y) del centro de la selección
+	var min_y = INF
+	var max_y = -INF
+	for idx in indices:
+		var pts: PackedVector2Array = active_layer.lines[idx]["points"]
+		for p in pts:
+			var global_y = active_paper.position.y + p.y
+			min_y = min(min_y, global_y)
+			max_y = max(max_y, global_y)
+			
+	if min_y == INF: return
+	var center_global_y = (min_y + max_y) / 2.0
+	
+	# Determinar cuál es la hoja de destino más adecuada
+	var target_paper_index = active_paper_index
+	var min_dist = INF
+	for i in range(papers.size()):
+		var p = papers[i]
+		# Rango de la hoja
+		var top = p.position.y
+		var bottom = p.position.y + p.size.y
+		
+		# Si está dentro de la hoja
+		if center_global_y >= top and center_global_y <= bottom:
+			target_paper_index = i
+			break
+			
+		# En caso de estar fuera de los límites de todas las hojas, elegir la más cercana
+		var center_p = top + p.size.y / 2.0
+		var dist = abs(center_global_y - center_p)
+		if dist < min_dist:
+			min_dist = dist
+			target_paper_index = i
+			
+	if target_paper_index == active_paper_index:
+		return # No hay cambio
+		
+	var target_paper = papers[target_paper_index]
+	var target_layer = target_paper.get_child(active_layer_index) as DrawingLayer
+	
+	# Extraer y ordenar índices de mayor a menor para eliminar sin problemas
+	var sorted_indices = indices.duplicate()
+	sorted_indices.sort()
+	sorted_indices.reverse()
+	
+	var offset = active_paper.position - target_paper.position
+	var target_selected_indices: Array[int] = []
+	
+	for idx in sorted_indices:
+		var line_data = active_layer.lines[idx]
+		var pts: PackedVector2Array = line_data["points"]
+		for i in range(pts.size()):
+			pts[i] += offset
+		line_data["points"] = pts
+		
+		target_layer.lines.append(line_data)
+		target_selected_indices.append(target_layer.lines.size() - 1)
+		
+		active_layer.lines.remove_at(idx)
+		
+	# Actualizar la selección y el índice de hoja activo
+	active_layer.selected_indices.clear()
+	target_layer.selected_indices = target_selected_indices
+	active_paper_index = target_paper_index
+	
+	active_layer.queue_redraw()
+	target_layer.queue_redraw()
+
+func begin_drag_visuals() -> void:
+	if active_paper_index >= 0 and active_paper_index < papers.size():
+		var p = papers[active_paper_index]
+		p.clip_contents = false
+		p.z_index = 100
+
+func end_drag_visuals() -> void:
+	for p in papers:
+		p.clip_contents = true
+		p.z_index = 0
+
 func _on_clear_requested() -> void:
 	for paper in papers:
 		for layer in paper.get_children():

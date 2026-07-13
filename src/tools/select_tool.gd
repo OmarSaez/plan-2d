@@ -113,11 +113,20 @@ func process_input(event: InputEvent) -> void:
 						is_moving = false
 					
 			else:
+				if canvas.has_method("end_drag_visuals"):
+					canvas.end_drag_visuals()
+					
 				if layer.is_drawing_lasso:
 					layer.finish_lasso()
 				elif is_moving and has_dragged:
+					if canvas.has_method("transfer_elements"):
+						canvas.transfer_elements(layer.selected_indices)
 					if not original_state_saved:
 						canvas.save_state()
+				elif dragging_index >= 0 and has_dragged:
+					if canvas.has_method("transfer_elements"):
+						canvas.transfer_elements([dragging_index])
+					canvas.save_state()
 						
 				dragging_index = -1
 				is_moving = false
@@ -130,6 +139,10 @@ func process_input(event: InputEvent) -> void:
 				layer.queue_redraw()
 				
 		elif is_moving and layer.selected_indices.size() > 0:
+			if not has_dragged:
+				if canvas.has_method("begin_drag_visuals"):
+					canvas.begin_drag_visuals()
+					
 			var delta = event.position - last_mouse_pos
 			last_mouse_pos = event.position
 			
@@ -152,6 +165,8 @@ func process_input(event: InputEvent) -> void:
 			if (type == "straight" or pts.size() == 2) and pts.size() >= 2:
 				if not has_dragged:
 					pending_click_id += 1 # Cancelar el tap si empezamos a arrastrar antes de que expire
+					if canvas.has_method("begin_drag_visuals"):
+						canvas.begin_drag_visuals()
 				has_dragged = true
 				
 				var p1 = pts[0]
